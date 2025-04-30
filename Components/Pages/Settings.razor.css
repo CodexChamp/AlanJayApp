@@ -1,0 +1,254 @@
+
+@media (orientation: portrait) { /* Apply Light Mode */
+    body {
+        background-color: var(--bg-light);
+        color: var(--text-light);
+        font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+    }
+
+    /* Font Size Classes */
+    .small-font {
+        font-size: var(--font-small);
+    }
+
+    .medium-font {
+        font-size: var(--font-medium);
+    }
+
+    .large-font {
+        font-size: var(--font-large);
+    }
+
+    /* Card Layout for Settings */
+    .form-control {
+        background: var(--card-bg-light);
+        width: 100%;
+        text-align: center;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: var(--shadow-light);
+        border: 1px solid var(--border-color-light);
+    }
+
+        .form-control:hover {
+            background: white;
+        }
+
+    /* Headings */
+    h2, h3 {
+        text-align: center;
+        font-weight: bold;
+    }
+
+    /* Form Labels */
+    label {
+        display: block;
+        text-align: center;
+        font-weight: 600;
+        margin-top: 15px;
+    }
+
+    /* Input & Select Styling */
+    select, input {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border: 1px solid var(--input-border-light);
+        border-radius: 5px;
+        background-color: var(--input-bg-light);
+        font-size: 16px;
+        transition: all 0.2s ease-in-out;
+    }
+
+        /* On Focus */
+        select:focus, input:focus {
+            border-color: var(--button-bg-light);
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+        }
+
+    /* Buttons */
+    button {
+        width: 100%;
+        padding: 12px;
+        margin-top: 20px;
+        background: var(--button-bg-light);
+        color: var(--button-text-light);
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: background 0.3s ease-in-out;
+    }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+
+    /* High Contrast Mode */
+    .high-contrast-mode {
+        background-color: var(--bg-contrast) !important;
+        color: var(--text-contrast) !important;
+    }
+
+        .high-contrast-mode .settings-container {
+            background: var(--card-bg-contrast);
+            box-shadow: var(--shadow-contrast);
+            border: 2px solid var(--border-color-contrast);
+        }
+
+        .high-contrast-mode label,
+        .high-contrast-mode select,
+        .high-contrast-mode input,
+        .high-contrast-mode button {
+            background: var(--input-bg-contrast);
+            color: var(--text-contrast);
+            border: 2px solid var(--input-border-contrast);
+        }
+
+        .high-contrast-mode button {
+            background: var(--button-bg-contrast);
+            color: var(--button-text-contrast);
+        }
+
+            .high-contrast-mode button:hover {
+                background: var(--text-contrast);
+                color: var(--bg-contrast);
+            }
+}
+
+
+    body {
+        background-color: var(--bg-light);
+        color: var(--text-light);
+        font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+    }
+
+    /* Font Size Classes */
+    .small-font {
+        font-size: var(--font-small);
+    }
+
+    .medium-font {
+        font-size: var(--font-medium);
+    }
+
+    .large-font {
+        font-size: var(--font-large);
+    }
+
+    /* Card Layout for Settings */
+    .form-control {
+        background: var(--card-bg-light);
+        width: 100%;
+        text-align: center;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: var(--shadow-light);
+        border: 1px solid var(--border-color-light);
+    }
+
+        .form-control:hover {
+            background: white;
+        }
+
+    /* Headings */
+    h2, h3 {
+        text-align: center;
+        font-weight: bold;
+    }
+
+    /* Form Labels */
+    label {
+        display: block;
+        text-align: center;
+        font-weight: 600;
+        margin-top: 15px;
+    }
+
+    /* Input & Select Styling */
+    select, input {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border: 1px solid var(--input-border-light);
+        border-radius: 5px;
+        background-color: var(--input-bg-light);
+        font-size: 16px;
+        transition: all 0.2s ease-in-out;
+    }
+
+        /* On Focus */
+        select:focus, input:focus {
+            border-color: var(--button-bg-light);
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+        }
+
+    /* Buttons */
+    button {
+        width: 100%;
+        padding: 12px;
+        margin-top: 20px;
+        background: var(--button-bg-light);
+        color: var(--button-text-light);
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: background 0.3s ease-in-out;
+    }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+
+    /* High Contrast Mode */
+    .high-contrast-mode {
+        background-color: var(--bg-contrast) !important;
+        color: var(--text-contrast) !important;
+    }
+
+        .high-contrast-mode .settings-container {
+            background: var(--card-bg-contrast);
+            box-shadow: var(--shadow-contrast);
+            border: 2px solid var(--border-color-contrast);
+        }
+
+        .high-contrast-mode label,
+        .high-contrast-mode select,
+        .high-contrast-mode input,
+        .high-contrast-mode button {
+            background: var(--input-bg-contrast);
+            color: var(--text-contrast);
+            border: 2px solid var(--input-border-contrast);
+        }
+
+        .high-contrast-mode button {
+            background: var(--button-bg-contrast);
+            color: var(--button-text-contrast);
+        }
+
+            .high-contrast-mode button:hover {
+                background: var(--text-contrast);
+                color: var(--bg-contrast);
+            }
+

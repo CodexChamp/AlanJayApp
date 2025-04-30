@@ -1,0 +1,33 @@
+﻿<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.companyname.alanjayapp">
+
+	<application android:label="AlanJayFleet"
+				 android:icon="@mipmap/icon"
+				 android:allowBackup="true"
+				 android:supportsRtl="true">
+
+		<meta-data android:name="android.webkit.WebView.EnableSafeBrowsing" android:value="false" />
+
+	</application>
+
+	<!-- ✅ Existing Permissions -->
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+	<uses-permission android:name="android.permission.INTERNET" />
+	<uses-permission android:name="android.permission.CAMERA" />
+	<uses-permission android:name="android.permission.CAPTURE_AUDIO_OUTPUT" />
+	<uses-permission android:name="android.permission.CAPTURE_SECURE_VIDEO_OUTPUT" />
+	<uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT" />
+	<uses-permission android:name="android.permission.DETECT_SCREEN_CAPTURE" />
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+	<uses-permission android:name="android.permission.MANAGE_DEVICE_POLICY_CAMERA" />
+	<uses-permission android:name="android.permission.MANAGE_MEDIA" />
+	<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+	<uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+	<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+	
+
+	<!-- ✅ Add camera feature requirement -->
+	<uses-feature android:name="android.hardware.camera"/>
+	<uses-feature android:name="android.hardware.camera.autofocus" />
+
+</manifest>

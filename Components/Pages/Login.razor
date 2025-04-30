@@ -1,0 +1,109 @@
+﻿@namespace AlanJayApp.Pages
+@page "/login"
+@using AlanJayApp.Services
+@inject AuthService AuthService
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject CustomAuthStateProvider AuthStateProvider
+
+<style src="LoginPage.razor.css" scoped></style>
+
+    <div class="menu">
+        <div class="logo-container">
+            @if (!string.IsNullOrEmpty(imageSource))
+            {
+                <img src="@imageSource" width="80%" />
+            }
+            else
+            {
+                <p>Loading Image...</p>
+            }
+        </div>
+
+        <EditForm Model="@this" OnValidSubmit="OnLoginClicked">
+            <DataAnnotationsValidator />
+
+            <div>
+                <label>Login ID:</label>
+                <InputText @bind-Value="loginID" class="form-control" autocomplete="username" />
+
+            </div>
+
+            <div>
+                <label>Password:</label>
+                <InputText @bind-Value="Password" type="password" class="form-control" autocomplete="current-password" />
+
+            </div>
+
+            <button class="login-button" @onclick="OnLoginClicked">Login</button>
+
+            <p style="color: red">@ErrorMessage</p>
+        </EditForm>
+    </div>
+
+
+@code {
+    private string loginID = "";
+    private string Password = "";
+    private string ErrorMessage = "";
+    private string? imageSource;
+    private bool isLoggedIn = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        string currentUrl = Navigation.Uri;
+        Console.WriteLine($"[DEBUG] Login Page Loaded at: {currentUrl}");
+        isLoggedIn = await AuthService.IsLoggedInAsync();
+        if (isLoggedIn)
+        {
+            Console.WriteLine("[DEBUG] User already logged in. Redirecting to /Home...");
+            Navigation.NavigateTo("/Home", true);
+            return; // ✅ Stops further execution
+        }
+
+        try
+        {
+            using var stream = await FileSystem.OpenAppPackageFileAsync("alanjay.png");
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            byte[] imageBytes = memoryStream.ToArray();
+
+            imageSource = $"data:image/png;base64,{Convert.ToBase64String(imageBytes)}";
+        }
+        catch (Exception)
+        {
+            Console.WriteLine("Error loading image.");
+        }
+    }
+
+
+    private async Task OnLoginClicked()
+    {
+        Console.WriteLine("Login button clicked"); // ✅ Debug log to confirm function runs
+
+        var result = await AuthService.LoginAsync(loginID, Password);
+        if (result != null)
+        {
+            Console.WriteLine($"User authenticated: {result.loginID}"); // ✅ Debug log username
+
+
+
+            await AuthStateProvider.SetLoggedInAsync(result); // ✅ Use AuthStateProvider
+
+            Navigation.NavigateTo("/Home");
+        }
+        else
+        {
+            Console.WriteLine("Login failed"); // ✅ Debug login failure
+            ErrorMessage = "Invalid credentials.";
+        }
+    }
+
+
+
+    private class UserData
+    {
+        public string loginID { get; set; } = string.Empty;
+        public int EmployeeID { get; set; }
+    }
+}

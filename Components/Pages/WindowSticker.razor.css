@@ -1,0 +1,387 @@
+﻿/* Ensure consistency with other pages */
+.container {
+    margin: 20px auto;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: whitesmoke !important;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+    padding-bottom: 80px;
+}
+
+.container, .data-table-container, .content {
+    background-color: inherit !important;
+}
+/* Input styling */
+.input-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.input-field {
+    flex: 1;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Button styling */
+.icon-button {
+    padding: 10px;
+    background-color: lightgray;
+    color: black;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+    .icon-button:hover {
+        background-color: #0056b3;
+        color: white;
+    }
+
+/* Table styling */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto; /* Change to auto so columns can shrink further */
+}
+
+    /* Set flexible column widths */
+    .table th:nth-child(1), .table td:nth-child(1) {
+        width: 20%; /* First column */
+        max-width: 80px; /* Prevents excessive shrinking */
+    }
+
+    .table th:nth-child(2), .table td:nth-child(2) {
+        width: 60%; /* Middle column */
+        min-width: 150px; /* Keeps text readable */
+    }
+
+    .table th:nth-child(3), .table td:nth-child(3) {
+        width: 20%; /* Last column */
+        max-width: 80px;
+    }
+
+    /* Ensures text wraps instead of overflowing */
+.table td {
+    overflow: hidden;
+    text-overflow: ellipsis; /* Adds "..." for truncated text */
+}
+
+
+/* Container */
+.container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+    padding-bottom: 80px;
+}
+
+/* Input Fields */
+input, select, textarea {
+    width: 100%; /* Allow full width */
+
+    background-color: var(--input-bg) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+
+/* Button Styling */
+.icon-button, .back-button {
+    padding: 10px;
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+    .icon-button:hover, .back-button:hover {
+        background-color: var(--button-hover-bg) !important;
+    }
+
+.table th, .table td {
+    padding: 5px; /* Reduce padding for smaller screens */
+    text-align: left;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+    .table th {
+        background-color: var(--table-header-bg) !important;
+        color: var(--table-header-text) !important;
+    }
+
+    /* Alternating row colors */
+    .table tr:nth-child(even) {
+        background-color: var(--table-row-even) !important;
+    }
+
+    .table tr:nth-child(odd) {
+        background-color: var(--table-row-odd) !important;
+    }
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: var(--modal-bg) !important;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 500px;
+    margin: auto;
+}
+
+
+
+/* Dark Mode Footer */
+.dark-mode .bottom-nav {
+    background: rgba(30, 30, 30, 0.8) !important;
+}
+
+/* Miscellaneous */
+p {
+    text-align: center;
+    font-size: 16px;
+    color: var(--text-color);
+    margin-bottom: 0;
+}
+
+.vehicle-details p {
+    margin: 2px 0;
+    padding: 0;
+    line-height: 1.2;
+}
+
+
+
+    .table th, .table td {
+        border: 1px solid #ccc;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .table th {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .table tr:nth-child(even) {
+        background-color: floralwhite !important;
+    }
+
+/* Center the "no results" message */
+p {
+    text-align: center;
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 0;
+}
+
+.back-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 4rem;
+    text-decoration: none;
+    color: #333;
+    background: none;
+    border: none;
+}
+
+    .back-button:hover {
+        color: #007bff;
+    }
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 500px;
+    margin: auto;
+}
+
+.vehicle-details p {
+    margin: 2px 0; /* Reduces space between each line */
+    padding: 0; /* Removes unnecessary padding */
+    line-height: 1.2; /* Adjusts the spacing between text */
+}
+
+/* Make sure modal backgrounds also update */
+.dark-mode .modal-content {
+    background-color: #1e1e1e !important;
+    color: white !important;
+}
+/* Apply dark mode styles */
+.dark-mode {
+    --bg-color: #121212;
+    --text-color: white;
+}
+
+    /* Apply dark mode globally */
+    .dark-mode body,
+    .dark-mode .container,
+    .dark-mode .modal-content,
+    .dark-mode .table tr:nth-child(even) {
+        background-color: var(--bg-color) !important;
+        color: var(--text-color) !important;
+    }
+
+    /* Ensure input fields also change */
+    .dark-mode input,
+    .dark-mode select,
+    .dark-mode textarea {
+        background-color: #2a2a2a !important; /* Darker input fields */
+        color: white !important;
+        border: 1px solid white !important;
+    }
+
+    /* Ensure buttons match theme */
+    .dark-mode .icon-button {
+        background-color: #444 !important;
+        color: white !important;
+    }
+
+        .dark-mode .icon-button:hover {
+            background-color: #007bff !important;
+        }
+        /* High Contrast Mode */
+.high-contrast-mode {
+    --bg-color: #000000;  /* Pure Black */
+    --text-color: #ffdd00; /* Bright Yellow */
+    --table-header: #ffdd00; /* Bright Yellow */
+    --table-row-dark: #222222; /* Dark Gray */
+    --table-row-light: #444444; /* Slightly Lighter Gray */
+}
+
+/* Apply High Contrast Globally */
+.high-contrast-mode body,
+.high-contrast-mode .container,
+.high-contrast-mode .modal-content {
+    background-color: var(--bg-color) !important;
+    color: var(--text-color) !important;
+}
+
+/* Tables */
+.high-contrast-mode .table {
+    background-color: var(--bg-color) !important;
+    color: var(--text-color) !important;
+    border-color: var(--text-color) !important;
+}
+
+.high-contrast-mode .table th {
+    background-color: var(--table-header) !important; /* Bright Yellow */
+    color: black !important;
+}
+
+.high-contrast-mode .table tr:nth-child(even) {
+    background-color: var(--table-row-dark) !important; /* Dark Gray */
+}
+
+.high-contrast-mode .table tr:nth-child(odd) {
+    background-color: var(--table-row-light) !important; /* Slightly Lighter Gray */
+}
+
+/* Force Text to Always Be Yellow */
+.high-contrast-mode .table td,
+.high-contrast-mode .table th,
+.high-contrast-mode p,
+.high-contrast-mode label,
+.high-contrast-mode span,
+.high-contrast-mode a {
+    color: var(--text-color) !important;
+}
+
+/* Buttons */
+.high-contrast-mode .icon-button,
+.high-contrast-mode .btn {
+    background-color: var(--text-color) !important; /* Bright Yellow */
+    color: black !important; /* High contrast */
+    border: 2px solid var(--text-color);
+}
+
+.high-contrast-mode .icon-button:hover,
+.high-contrast-mode .btn:hover {
+    background-color: #222222 !important;
+    color: var(--text-color) !important;
+}
+
+/* Inputs */
+.high-contrast-mode input,
+.high-contrast-mode select,
+.high-contrast-mode textarea {
+    background-color: black !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--text-color) !important;
+}
+
+/* Ensure modal backgrounds are black */
+.high-contrast-mode .modal-content {
+    background-color: black !important;
+    color: var(--text-color) !important;
+}
+
+/* High Contrast Links */
+.high-contrast-mode a {
+    color: var(--text-color) !important;
+    text-decoration: underline;
+}
+
+.high-contrast-mode a:hover {
+    color: white !important;
+}
+body {
+    overflow-y: auto !important;
+}
+
+textarea {
+    transition: margin-bottom 0.3s ease-in-out;
+}
+
+@media (max-width: 600px) {
+    textarea:focus {
+        margin-bottom: 200px; /* Push textarea up when keyboard appears */
+    }
+}
+.check {
+    transform: scale(2.5);
+    margin-top:.5rem;
+}

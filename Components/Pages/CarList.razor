@@ -1,0 +1,238 @@
+﻿@page "/CarList"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@using Microsoft.Extensions.Logging
+@using Microsoft.EntityFrameworkCore
+@inject NavigationManager Navigation
+@inject AuthService AuthService
+@using AlanJayApp.Data
+@inject ApplicationDbContext DbContext
+@using System.ComponentModel.DataAnnotations;
+@using System.ComponentModel.DataAnnotations.Schema;
+@inject CarService CarService
+<div class="car-list-container">
+
+    <!-- RED Warning Text -->
+    <p style="text-align: center; color: red;">RED = Damaged in Transit</p>
+
+    <!-- Location Input -->
+    <div style="text-align: center; margin-bottom: 10px;">
+        <label for="locationInput" style="font-weight: bold;">Location:</label>
+        <input @bind="Location" @bind:event="oninput" type="text" id="locationInput"
+        placeholder="Enter Location"
+        style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; width: 200px;" />
+
+    </div>
+
+    <!-- Car List Table -->
+    <table class="car-list">
+        <tbody>
+            @if (ScannedCars.Any())
+            {
+                @foreach (var car in ScannedCars)
+                {
+                    <tr style="background-color: @(ScannedCars.IndexOf(car) % 2 == 0 ? "#e6ffe6" : "#ffffff");">
+                        <td style="color: @(car.Damaged ? "red" : "inherit");">@car.VIN.Substring(Math.Max(0, car.VIN.Length - 8))</td>
+                        <td style="color: @(car.Damaged ? "red" : "inherit");">@car.Color</td>
+                        <td style="color: @(car.Damaged ? "red" : "inherit");">@car.Make</td>
+                        <td style="color: @(car.Damaged ? "red" : "inherit");">@car.Year</td>
+                        <td>
+                            <button class="remove-button" @onclick="() => RemoveCar(car)">X</button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="6" style="text-align: center;">No cars in the list.</td></tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Submit Button -->
+    <div style="text-align: center; margin-top: 20px;">
+        <button @onclick="SubmitCars" class="submit-button">Submit</button>
+    </div>
+</div>
+
+@code {
+    private List<CarModel> ScannedCars { get; set; } = new();
+    private string Location { get; set; } = "RANCH";
+    private int CarCount = 0;
+	public string InspectorName { get; set; } = "Unknown";
+
+    protected override async Task OnInitializedAsync()
+    {
+        // ✅ Try to load from Local Storage
+        var storedCars = await JS.InvokeAsync<string>("localStorage.getItem", "carList");
+        if (!string.IsNullOrEmpty(storedCars))
+        {
+            ScannedCars = System.Text.Json.JsonSerializer.Deserialize<List<CarModel>>(storedCars) ?? new();
+        }
+        else
+        {
+            // ✅ Fetch from API if local storage is empty
+            await FetchCarList();
+            StateHasChanged();
+        }
+        InspectorName = await AuthService.GetCurrentInspectorAsync() ?? "Unknown";
+    }
+
+    private async Task FetchCarList()
+    {
+        try
+        {
+            ScannedCars = await Http.GetFromJsonAsync<List<CarModel>>("/api/carlist") ?? new();
+            await UpdateLocalStorage(); // ✅ Sync local storage
+
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error fetching car list: {ex.Message}");
+        }
+    }
+
+    private async Task RemoveCar(CarModel car)
+    {
+        ScannedCars.Remove(car);
+        CarService.RemoveCar();
+        await UpdateLocalStorage();
+        StateHasChanged();
+    }
+
+
+    private async Task SubmitCars()
+    {
+        if (!ScannedCars.Any())
+        {
+            await JS.InvokeVoidAsync("alert", "No Vehicles to Submit.");
+            return;
+        }
+
+        // Retrieve the current inspector/username.
+        var inspectorName = await AuthService.GetCurrentInspectorAsync();
+
+        // If the inspector is "demo" (case-insensitive), exit without submitting.
+        if (!string.IsNullOrEmpty(inspectorName) && inspectorName.Equals("demo", StringComparison.OrdinalIgnoreCase))
+        {
+            Console.WriteLine("Demo account detected: Submission is disabled.");
+            await JS.InvokeVoidAsync("alert", "Submissions are disabled for demo accounts.");
+            return;
+        }
+
+        // Build your payload from the scanned cars.
+        var payload = ScannedCars.Select(car => new VehiclesScanned
+            {
+                VIN = car.VIN.Replace(" ", ""),
+                VehicleID = car.VehicleID,
+                DamagedInTransit = car.Damaged,
+                Location = string.IsNullOrWhiteSpace(Location) ? "RANCH" : Location,
+                Note = car.Note ?? "",
+                KeyCode = car.KeyCode ?? string.Empty
+            }).ToList();
+
+        try
+        {
+            // Save each car if it does not already exist.
+            foreach (var car in payload)
+            {
+                var existingCar = await DbContext.VehiclesScanned
+                    .FirstOrDefaultAsync(c => c.VIN == car.VIN);
+
+                if (existingCar == null)
+                {
+                    var newCar = new AlanJayApp.Data.VehiclesScanned
+                        {
+                            VIN = car.VIN,
+                            vehicleID = car.VehicleID,
+                            damagedInTransit = car.DamagedInTransit,
+                            location = car.Location,
+                            note = car.Note,
+                            KeyCode = car.KeyCode,
+                            KeyType = 1
+                        };
+
+                    DbContext.VehiclesScanned.Add(newCar);
+                    Console.WriteLine($"✔ Added car to database: {car.VIN}");
+                }
+                else
+                {
+                    Console.WriteLine($"Car: {car.VIN} already exists.");
+                }
+            }
+             
+            await DbContext.SaveChangesAsync();
+            Console.WriteLine("✔ Cars saved to database successfully!");
+
+            // Remove cars from the local collection once saved.
+            foreach (var car in ScannedCars.ToList())
+            {
+                await RemoveCar(car);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error submitting cars: {ex.Message}");
+        }
+    }
+
+    private void OpenWindowSticker()
+    {
+
+         Navigation.NavigateTo($"/WindowSticker");
+    
+    }
+    private async Task UpdateCarCount()
+    {
+        var storedCars = await JS.InvokeAsync<string>("localStorage.getItem", "carList");
+        if (!string.IsNullOrEmpty(storedCars))
+        {
+            var cars = System.Text.Json.JsonSerializer.Deserialize<List<CarModel>>(storedCars) ?? new();
+            CarCount = cars.Count;
+        }
+        StateHasChanged(); // ✅ Ensure UI updates
+    }
+
+    private async Task UpdateLocalStorage()
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(ScannedCars);
+        await JS.InvokeVoidAsync("localStorage.setItem", "carList", json);
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/VinNumScan");
+
+    private class CarModel
+    {
+        public string VIN { get; set; } = string.Empty;
+        public int VehicleID { get; set; }
+        public bool Damaged { get; set; }
+        public string Color { get; set; } = string.Empty;
+        public string Make { get; set; } = string.Empty;
+        public string Year { get; set; } = string.Empty;
+        public string Note { get; set; } = string.Empty;
+        public string? KeyCode { get; set; } = string.Empty;
+    }
+
+    public class VehiclesScanned
+    {
+        [Key]
+        public int Id { get; set; }
+        [Required]
+        public string VIN { get; set; } = string.Empty;
+        public int VehicleID { get; set; }
+        public bool DamagedInTransit { get; set; }
+        public string Location { get; set; } = string.Empty;
+        public string Note { get; set; } = string.Empty;
+        public string KeyCode { get; set; } = string.Empty;
+    }
+    private class CarSubmission
+    {
+        public string VIN { get; set; } = string.Empty;
+        public int VehicleID { get; set; }
+        public bool Damaged { get; set; }
+        public string Location { get; set; } = string.Empty;
+        public string Note { get; set; } = string.Empty;
+		public string KeyCode { get; set; } = string.Empty;
+    }
+}

@@ -1,0 +1,62 @@
+.menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: beige; /* Light background color */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+}
+
+.logo-container {
+    display: grid;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    padding: 20px;
+}
+
+.logo {
+    width: 400px;
+    height: auto;
+    margin-right: 10px;
+}
+
+th, td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+h2 {
+    margin-top: 0;
+    text-align: center;
+}
+
+.btn btn-primary {
+    margin-top: .5rem;
+}
+
+img {
+    max-width: 100%; /* Ensures the image doesn't overflow its container */
+    height: auto; /* Maintains the aspect ratio */
+    display: block; /* Removes inline padding/margin issues */
+}
+
+.login-button {
+    background-color: #007bff; /* Blue color */
+    color: white; /* White text */
+    border: none;
+    padding: 10px 20px;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 5px; /* Rounded corners */
+    cursor: pointer;
+    width: 80px; /* Adjust width */
+    text-align: center;
+}
+
+    .login-button:hover {
+        background-color: #0056b3; /* Darker blue on hover */
+    }

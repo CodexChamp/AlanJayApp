@@ -1,0 +1,581 @@
+﻿@page "/windowsticker"
+@inject ILogger<WindowSticker> Logger
+@using Microsoft.Extensions.Logging
+@using Microsoft.EntityFrameworkCore
+@inject DatabaseConnectionService DatabaseService
+@namespace AlanJayApp.Pages
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject AuthService AuthService
+@using AlanJayApp.Data
+@inject ApplicationDbContext DbContext
+@inject FordRecallScraperService FordRecallScraperService
+@inject StellantisRecallScraperService StellantisRecallScraperService
+
+
+<div class="container">
+
+    @if (VehicleDetails != null)
+    {
+        <div class="vehicle-details">
+            @if (!string.IsNullOrWhiteSpace(VinInput))
+            {
+                <p><strong>VIN:</strong> @VinInput</p>
+            }
+            <p><strong>Quote ID:</strong> @VehicleDetails.QuoteID</p>
+            <p><strong>Agency:</strong> @VehicleDetails.Agency</p>
+            <p><strong>Description:</strong> @VehicleDetails.VmodelDesc</p>
+            <p><strong>Color:</strong> @VehicleDetails.Color</p>
+            <p><strong>Year:</strong> @VehicleDetails.Vyear</p>
+            <p><strong>Make:</strong> @VehicleDetails.Vmake</p>
+            <p><strong>Tech:</strong> @TechName </p>
+
+        </div>
+        
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    @if (IsWebGroup3)
+                    {
+                        <th>Done</th>
+                    }
+                </tr>
+            </thead> 
+            <tbody>
+                @foreach (var item in StickerOptions)
+                {
+                    <tr>
+                        <td>@item.OptionName</td>
+                        <td>@item.OptionDescription</td>
+                        @if (IsWebGroup3)
+                        {
+                            <td>
+                                <input type="checkbox" class="check" @bind="@item.isCompleted" @bind:event="onchange" />
+                            </td>
+
+                        }
+                    </tr>
+                }
+
+                <!-- Add Damaged Checkbox Row -->
+                <tr>
+                    <td><strong>Damage/ Other</strong></td>
+                    <td>
+                        <textarea id="damageTextarea" @bind="StickerNote" class="form-control"
+                                  placeholder="Describe any damage or issues..."
+                                  maxlength="250"
+                                  @oninput="@(async e => {
+                                  HandleDamageInput(e);
+                                  await JS.InvokeVoidAsync("autoExpand", damageTextAreaRef);
+                                  })"
+                                  @onfocus="@(async () => {
+                                    await HandleFocus();
+                                    await JS.InvokeVoidAsync("scrollToInput", damageTextAreaRef);
+                                    })"
+                                  @onblur="HandleBlur"
+                                  @ref="damageTextAreaRef">
+                        </textarea>
+
+                    </td>
+                    <td>
+                            <input type="checkbox" class="check" @bind="IsDamaged" disabled /> 
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        @if (StickerOptions.All(o => o.isCompleted))
+        {
+            <button @onclick="SubmitCompletedSticker" class="btn btn-success">Ready</button>
+        }
+        else
+        {
+            <button @onclick="SubmitIncompleteSticker" class="btn btn-primary">Submit</button>
+        }
+        <!-- Button to trigger recall lookup -->
+        //@if (IsStellantis(VehicleDetails?.Vmake))
+        //{
+            //<button @onclick="CheckRecallsAsync" class="btn btn-info" disabled="@IsRecallLoading" style="margin-left: 1rem;">
+                //@if (IsRecallLoading)
+                //{
+                 //   <span>Loading recall info...</span>
+                //}
+                //else
+               // {
+               //     <span>Check Recalls</span>
+               // }
+            //</button>
+        //}
+
+
+        <!-- Display recall results if not loading -->
+        @if (!IsRecallLoading && !string.IsNullOrWhiteSpace(RecallResultOutput))
+        {
+            <div class="recall-results">
+                <h4>Recall Information</h4>
+                <p>@RecallResultOutput</p>
+            </div>
+        }
+        <div class="modal" style="display: @(ShowQCModal ? "block" : "none");">
+            <div class="modal-content">
+                <h3>QC Checklist</h3>
+                @if (QCItems == null || !QCItems.Any())
+                {
+                    <p>No QC Items Found</p>  <!-- ✅ Debugging Text -->
+                }
+                else
+                {
+                    <ul>
+                        @foreach (var item in QCItems)
+                        {
+                            <li>@item.QCItemDescription</li>
+                        }
+                    </ul>
+                }
+                <button @onclick="ConfirmQC" class="btn btn-success">Confirm</button>
+                <button @onclick="CancelQC" class="btn btn-danger">Cancel</button>
+            </div>
+        </div>
+    }
+    else
+    {
+        @if (VehicleDetails == null)
+        {
+            <!-- The data is still loading -->
+            <p>Loading...</p>
+        }
+        else if (!QCItems?.Any() ?? true)
+        {
+            <!-- We finished loading, but no items are available -->
+            <p>No Info Found</p>
+        }
+    }
+</div>
+<script>
+    function limitText(field, maxLength) {
+        if (field.value.length > maxLength) {
+            field.value = field.value.substring(0, maxLength);
+        }
+    }
+    function autoExpand(textarea) {
+        textarea.style.height = "auto"; // Reset height
+        textarea.style.height = textarea.scrollHeight + "px"; // Expand to fit content
+    }
+    window.scrollToInput = (element) => {
+        if (element) {
+            setTimeout(() => {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100); // wait a bit for the keyboard
+        }
+    };
+</script>
+
+@code{
+    public string VinInput { get; set; } = string.Empty;
+    [Parameter] public bool IsChecked { get; set; }
+    [Parameter] public EventCallback<bool> IsCheckedChanged { get; set; }
+    [Parameter] public EventCallback OnChange { get; set; }
+    private VehicleDetailsModal? VehicleDetails { get; set; }
+    private List<WindowStickerOption> StickerOptions { get; set; } = new();
+    private List<QCItem> QCItems { get; set; } = new();
+    private bool IsWebGroup3 { get; set; } = false;
+    private string InspectorName { get; set; } = "";
+    private bool IsDamaged { get; set; } = false;
+    private string StickerNote { get; set; } = "";
+    private string DebugInfo { get; set; } = "";
+    private string SubmitStatus { get; set; } = "";
+    private string SubmitButtonText { get; set; } = "Submit";
+    private bool ShowQCModal { get; set; } = false;
+    private ElementReference damageTextAreaRef;
+    private string RecallResultOutput { get; set; } = "";
+    private bool IsRecallLoading { get; set; } = false;
+    private string TechName { get; set; } = "Unknown";
+
+    protected override async Task OnInitializedAsync()
+    {
+        VinInput = (await JS.InvokeAsync<string>("localStorage.getItem", "savedVIN") ?? "").Trim();
+
+            Console.WriteLine($"[DEBUG] Retrieved VIN from storage: {VinInput}");
+        DebugInfo += $"Fetching Window Sticker Details...{VinInput}<br>";
+            await FetchWindowStickerDetails();
+        if (!string.IsNullOrWhiteSpace(VinInput))
+        {
+            // Call the original window sticker detail service (if needed)
+            var stickerDetails = await FordRecallScraperService.GetWindowStickerDetailsAsync(VinInput);
+            DebugInfo += $"Sticker details: {stickerDetails}<br>";
+        }
+            InspectorName = await AuthService.GetCurrentInspectorAsync() ?? "Unknown";
+            DebugInfo += $"Retrieved Inspector: {InspectorName}<br>";
+        var techName = (from v in DbContext.AzVehicles
+                        join e in DbContext.AzEmployees on v.DispatchEmployee equals e.EmployeeID
+                        where v.VIN == VinInput || v.VIN.Replace(" ", "") == VinInput.Replace(" ", "")
+                        select e.Employee)
+               .FirstOrDefault();
+
+
+        TechName = techName ?? "Unknown";
+    }
+    private async Task CheckRecallsAsync()
+    {
+        // Show "Loading..." and clear previous results
+        IsRecallLoading = true;
+        RecallResultOutput = "";
+        StateHasChanged();  // update UI
+
+        // Check VIN length
+        if (!string.IsNullOrWhiteSpace(VinInput) && VinInput.Length >= 8)
+        {
+            string last8 = VinInput.Substring(VinInput.Length - 8);
+            // Call Stellantis recall service
+            RecallResultOutput = await StellantisRecallScraperService.CheckRecallRapidResponseAsync(last8);
+        }
+        else
+        {
+            RecallResultOutput = "VIN is not long enough for recall lookup.";
+        }
+
+        // Hide "Loading..."
+        IsRecallLoading = false;
+        StateHasChanged();  // update UI
+    }
+
+
+
+    private async Task FetchWindowStickerDetails()
+        {
+    try
+    {
+            var activeDbKey = DatabaseService?.GetActiveDatabaseKey();
+            var activeConnectionString = DbContext.Database.GetDbConnection().ConnectionString;
+
+        Logger.LogInformation($"[DEBUG] Active DB Key: {activeDbKey}, Connection String: {activeConnectionString}");
+
+            Console.WriteLine($"[DEBUG] Active DB Key: {activeDbKey}, Connection String: {activeConnectionString}");
+
+        var response = await Http.GetFromJsonAsync<WindowStickerResponse>($"/api/windowsticker/{VinInput}");
+        if (response != null)
+        {
+            VehicleDetails = response.Vehicle;
+            StickerOptions = response.Options ?? new();
+            IsWebGroup3 = response.IsWebGroup3;
+        }
+
+        // ✅ Fetch QC Items Separately & Debug Log
+        QCItems = await Http.GetFromJsonAsync<List<QCItem>>("/api/windowsticker/qcitems") ?? new();
+
+        Logger.LogInformation($"[DEBUG] Fetched {QCItems.Count} QC Items:"); // ✅ Log count to Debug Console
+        foreach (var item in QCItems)
+        {
+            Logger.LogInformation($"[DEBUG] - Description: {item.QCItemDescription}"); // ✅ Correct
+        }
+    }
+    catch (Exception ex)
+    {
+        Logger.LogError($"[ERROR] Fetching data failed: {ex.Message}");
+    }
+    }
+
+
+    private async Task SubmitIncompleteSticker()
+    {
+    // Save as incomplete (status = 0)
+    Console.WriteLine("[DEBUG] SubmitIncompleteSticker clicked!");
+    Logger.LogInformation("[DEBUG] SubmitIncompleteSticker clicked!");
+
+    await SaveOptions();
+    await SaveSticker(false);
+    }
+    private async Task SubmitCompletedSticker()
+    {
+    Console.WriteLine("[DEBUG] SubmitCompleteSticker clicked!");
+    Logger.LogInformation("[DEBUG] SubmitCompleteSticker clicked!");
+    if (StickerOptions.All(o => o.isCompleted))
+    {
+        ShowQCModal = true;
+        return;
+    }
+    // Delete all options
+
+    }
+
+    private async Task ConfirmQC()
+    {
+    ShowQCModal = false;
+    await DeleteStickerOptions();
+    await SaveSticker(true);
+
+    }
+
+    private void CancelQC()
+    {
+    ShowQCModal = false;
+    }
+
+    private async Task SaveSticker(bool allCompleted)
+    {
+        Console.WriteLine($"Saving sticker... Inspector: {InspectorName}");
+
+        // If the logged-in account is a demo account, do not submit changes.
+        if (!string.IsNullOrEmpty(InspectorName) &&
+            InspectorName.Equals("demo", StringComparison.OrdinalIgnoreCase))
+        {
+            Console.WriteLine("Demo account detected: Submission is disabled for window sticker.");
+            await JS.InvokeVoidAsync("alert", "Submissions are disabled for demo accounts.");
+            return;
+        }
+
+        // Continue with saving the sticker as normal
+        var existingSticker = await DbContext.WindowStickers
+            .FirstOrDefaultAsync(s => s.VehicleID == VehicleDetails.VehicleID);
+
+        if (existingSticker != null)
+        {
+            // Update existing sticker
+            existingSticker.Status = allCompleted;
+            existingSticker.Damaged = IsDamaged;
+            existingSticker.Note = StickerNote;
+            existingSticker.Date = DateTime.UtcNow;
+            existingSticker.Inspector = InspectorName;
+
+            Console.WriteLine("✔ Existing sticker updated.");
+        }
+        else
+        {
+            // Create a new sticker record
+            var newSticker = new AlanJayApp.Data.WindowSticker
+                {
+                    VehicleID = VehicleDetails.VehicleID,
+                    Inspector = InspectorName,
+                    Status = allCompleted,
+                    Damaged = IsDamaged,
+                    Note = StickerNote,
+                    Date = DateTime.UtcNow
+                };
+
+            DbContext.WindowStickers.Add(newSticker);
+            Console.WriteLine("✔ New sticker created.");
+        }
+
+        // Save changes to the database
+        await DbContext.SaveChangesAsync();
+        Console.WriteLine("✔ Sticker saved successfully!");
+        SubmitStatus = "✔ Sticker saved successfully!";
+    }
+
+
+
+
+        private async Task SaveOptions()
+        {
+    try
+    {
+        foreach (var option in StickerOptions)
+        {
+            var existingOption = await DbContext.WindowStickerOptions
+                .Where(o => o.VehicleID == option.VehicleID && o.OptionID == option.OptionID)
+                .FirstOrDefaultAsync();
+
+            if (existingOption != null)
+            {
+                if (option.isCompleted)
+                {
+                    // ✅ Remove completed options
+                    DbContext.WindowStickerOptions.Remove(existingOption);
+                    Console.WriteLine($"✔ Deleted completed option: {option.OptionID}");
+                }
+                else
+                {
+                    // ✅ Update existing option if not completed
+                    existingOption.isCompleted = option.isCompleted;
+                }
+            }
+            else if (!option.isCompleted)
+            {
+                // ✅ Insert new option if it's not completed
+                var newOption = new AlanJayApp.Data.WindowStickerOption
+                        {
+                            VehicleID = option.VehicleID,
+                            OptionID = option.OptionID,
+                            isCompleted = option.isCompleted
+                        };
+                DbContext.WindowStickerOptions.Add(newOption);
+            }
+        }
+
+        await DbContext.SaveChangesAsync();
+        Console.WriteLine("✔ Options saved successfully!");
+        SubmitStatus = "✔ Options saved successfully!";
+    }
+    catch (Exception ex)
+    {
+        SubmitStatus = "❌ Error submitting options.";
+        Console.WriteLine($"[ERROR] {ex.Message}");
+    }
+        }
+
+
+
+    private async Task DeleteStickerOptions()
+    {
+        try
+        {
+        var optionsToDelete = await DbContext.WindowStickerOptions
+            .Where(o => o.VehicleID == VehicleDetails.VehicleID)
+            .ToListAsync();
+
+        DbContext.WindowStickerOptions.RemoveRange(optionsToDelete);
+        await DbContext.SaveChangesAsync();
+
+        Console.WriteLine("✔ Sticker options deleted successfully!");
+        }
+        catch (Exception ex)
+        {
+        Console.WriteLine($"Error deleting options: {ex.Message}");
+        }
+    }
+
+    private async Task OnCheckboxChanged(ChangeEventArgs e)
+    {
+        IsChecked = (bool?)e.Value ?? false; // Update the bound value
+        await IsCheckedChanged.InvokeAsync(IsChecked); // Notify parent component
+        await OnChange.InvokeAsync(); // Trigger any additional event in parent
+    }
+
+    private void CheckCompletionState()
+    {
+        if (StickerOptions.All(o => o.isCompleted))
+        {
+            SubmitButtonText = "Ready";
+            ShowQCModal = true;
+        }
+        else
+        {
+            SubmitButtonText = "Submit";
+            ShowQCModal = false;
+        }
+    }
+
+    private void UpdateButtonState()
+    {
+        if (StickerOptions.All(o => o.isCompleted))
+        {
+            SubmitButtonText = "Ready";
+            ShowQCModal = true;
+        }
+        else
+        {
+            SubmitButtonText = "Submit";
+            ShowQCModal = false;
+        }
+    }
+    private void HandleDamageInput(ChangeEventArgs e)
+    {
+        StickerNote = e.Value?.ToString() ?? "";
+
+        // ✅ Automatically check/uncheck the "Damaged" checkbox based on input
+        IsDamaged = !string.IsNullOrWhiteSpace(StickerNote);
+    }
+
+    private async Task HandleFocus()
+    {
+        await JS.InvokeVoidAsync("adjustForKeyboard", "damageTextarea");
+    }
+
+    private async Task HandleBlur()
+    {
+        await JS.InvokeVoidAsync("resetPosition");
+    }
+
+    [JSInvokable]
+    public async Task OnKeyboardShow()
+    {
+        await JS.InvokeVoidAsync("adjustForKeyboard", "damageTextarea");
+    }
+
+    [JSInvokable]
+    public async Task OnKeyboardHide()
+    {
+        await JS.InvokeVoidAsync("resetPosition");
+    }
+
+    // No need for HandleCheckboxChanged since the @bind takes care of it
+
+    public class VehicleDetailsModal
+    {
+        public int VehicleID { get; set; }
+        public string VIN { get; set; } = string.Empty;
+        public int QuoteID { get; set; }
+        public string Agency { get; set; } = "NA";
+        public string VmodelDesc { get; set; } = "NA";
+        public string Color { get; set; } = "NA";
+        public string Vyear { get; set; } = "NA";
+        public string Vmake { get; set; } = "NA";
+    }
+
+    public class WindowStickerOption
+    {
+        public int VehicleID { get; set; }
+        public int OptionID { get; set; }
+        public string OptionName { get; set; } = string.Empty;
+        public string OptionDescription { get; set; } = string.Empty;
+        public bool isCompleted { get; set; }
+    }
+
+    public class WindowStickerResponse
+    {
+        public VehicleDetailsModal Vehicle { get; set; } = new();
+        public List<WindowStickerOption> Options { get; set; } = new();
+        public bool IsWebGroup3 { get; set; }
+        public string Employee { get; set; } = string.Empty;
+        public string loginID { get; set; } = string.Empty;
+    }
+
+    public class StickerSubmission
+    {
+        public int VehicleID { get; set; }
+        public string Inspector { get; set; } = string.Empty;
+        public bool Status { get; set; }
+        public bool Damaged { get; set; }
+        public string Note { get; set; } = string.Empty;
+    }
+
+    public class WindowStickers
+    {
+        public int VehicleID { get; set; }
+        public string Inspector { get; set; } = string.Empty;
+        public DateTime Date { get; set; }
+        public bool Status { get; set; }
+        public bool Damaged { get; set; }
+        public string Note { get; set; } = string.Empty;
+    }
+
+    public class QCItem
+    {
+        public string QCItemDescription { get; set; } = string.Empty;
+    }
+    private string[] stellantisMakes = new string[]
+    {
+        "CHRYSLER",
+        "DODGE",
+        "JEEP",
+        "RAM",
+        "ALFA ROMEO",
+        "FIAT",
+        "MASERATI",
+        "PEUGEOT",
+        "ABARTH",
+        "CITROEN",
+        "DS",
+        "LANCIA",
+        "OPEL",
+        "VAUXHALL"
+    };
+
+    private bool IsStellantis(string make)
+    {
+        return !string.IsNullOrEmpty(make) && stellantisMakes.Contains(make.ToUpperInvariant());
+    }
+}

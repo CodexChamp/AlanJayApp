@@ -1,0 +1,151 @@
+
+:root {
+    /* Light Mode Defaults */
+    --bg-light: #edf7ee; /* Light greenish background */
+    --text-light: #222;
+    --card-bg-light: white;
+    --input-bg-light: #fdfdfd;
+    --input-border-light: #ccc;
+    --button-bg-light: #007bff;
+    --button-text-light: white;
+    --border-color-light: #bbb;
+    --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.1);
+    /* High Contrast Mode */
+    --bg-contrast: black;
+    --text-contrast: yellow;
+    --card-bg-contrast: #222;
+    --input-bg-contrast: black;
+    --input-border-contrast: yellow;
+    --button-bg-contrast: yellow;
+    --button-text-contrast: black;
+    --border-color-contrast: yellow;
+    --shadow-contrast: 0 4px 6px rgba(255, 255, 0, 0.5);
+    /* Font Sizes */
+    --font-small: 14px;
+    --font-medium: 16px;
+    --font-large: 18px;
+}
+
+/* Apply Light Mode */
+body {
+    background-color: var(--bg-light);
+    color: var(--text-light);
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+/* Font Size Classes */
+.small-font {
+    font-size: var(--font-small);
+}
+
+.medium-font {
+    font-size: var(--font-medium);
+}
+
+.large-font {
+    font-size: var(--font-large);
+}/* Home Page Container */
+.menu-container {
+    display: flex;
+    height: 90vh;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--bg-color) !important; /* Use theme variable */
+    color: var(--text-color) !important;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.button-container {
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    align-items: center; /* Center buttons */
+    gap: 15px; /* Add space between buttons */
+    margin-top: 20px;
+    transform: translateY(-20px)
+}
+.financial-icon, .car-icon {
+    width: 3rem; /* Adjust as needed */
+    height: auto; /* Adjust as needed */
+    vertical-align: middle;
+    filter: invert(1);
+}
+
+
+.menu-button {
+    display: flex;
+    align-items: center; /* Center vertically */
+    justify-content: center; /* Center horizontally */
+    gap: 10px; /* Space between the text and icon */
+    width: 300px;
+    padding: 10px 20px;
+    text-align: center;
+    color: var(--button-text) !important;
+    background-color: blue !important;
+    text-decoration: none;
+    font-size: inherit;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+
+    .menu-button:hover {
+        background-color: darkred !important;
+
+    }
+
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.logo-container {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    padding: 10px;
+    border-radius: 5px;
+    transform: translateY(-20px);
+    background-color: inherit !important; /* Follow Theme */
+    color: inherit !important;
+}
+
+.top-text {
+    font-family: 'TrinosSolid', sans-serif;
+    color: var(--highlight-color) !important;
+    font-style: italic;
+    display: block;
+    font-size: 6rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 0px var(--bg-color), 2.5px 2.5px 2.5px black;
+}
+
+.bottom-text {
+    font-family: 'Oswald', sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    font-style: italic;
+    color: var(--text-color) !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: -5px;
+    text-shadow: 1px 1px var(--bg-color), 1.5px 1.5px black;
+}
+

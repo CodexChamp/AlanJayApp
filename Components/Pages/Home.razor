@@ -1,0 +1,72 @@
+﻿@page "/Home"
+@namespace AlanJayApp.Pages
+@page "/"
+@inject NavigationManager Navigation
+@using AlanJayApp.Services
+@inject AuthService AuthService
+@inject IJSRuntime JS
+@inject CustomAuthStateProvider AuthStateProvider
+<div class="menu-container">
+    <div class="logo-container">
+        @if (imageSource is not null)
+        {
+            <img src="@imageSource" width="300" />
+        }
+        else
+        {
+            <p>Loading Image...</p>
+        }
+    </div>
+
+    <div class="button-container">
+        <button class="menu-button" @onclick="NavigateToReports">Financial 
+            <img src="Images/financial.png" class="financial-icon" />
+        </button>
+        <button class="menu-button" @onclick="NavigateToScanner">Vehicle 
+            <img src="Images/car.png" class="car-icon" />
+        </button>
+    </div>
+</div>
+
+@code {
+    private void NavigateToReports()
+    {
+        Navigation.NavigateTo("/Reports");
+    }
+
+    private void NavigateToScanner()
+    {
+        Navigation.NavigateTo("/VinNumScan");
+    }
+    private string? imageSource;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // ✅ Check if the user is logged in
+        bool isLoggedIn = await AuthService.IsLoggedInAsync();
+
+        if (!isLoggedIn)
+        {
+            Console.WriteLine("User not logged in. Redirecting to login page...");
+            Navigation.NavigateTo("/login", forceLoad: true);
+            return; // ✅ Stop further execution
+        }
+
+        try
+        {
+            using var stream = await FileSystem.OpenAppPackageFileAsync("alanjay.png");
+
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            byte[] imageBytes = memoryStream.ToArray();
+
+            imageSource = $"data:image/png;base64,{Convert.ToBase64String(imageBytes)}";
+        }
+        catch (Exception)
+        {
+            Console.WriteLine("Error loading image.");
+        }
+    }
+
+
+}

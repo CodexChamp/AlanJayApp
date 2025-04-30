@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="AlanJayApp.Components.Pages.VinNumScanPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:cv="clr-namespace:Camera.MAUI;assembly=Camera.MAUI"
+    xmlns:skia="clr-namespace:SkiaSharp.Views.Maui.Controls;assembly=SkiaSharp.Views.Maui.Controls"
+    xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
+    NavigationPage.HasNavigationBar="False"
+    BackgroundColor="#F9F9F9">
+
+	<!-- Outer grid with two overlaid layers -->
+	<Grid>
+		<!-- Bottom layer: Blurred background split into left and right halves -->
+		<Grid>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="*" />
+			</Grid.ColumnDefinitions>
+		</Grid>
+
+		<!-- Top layer: Main UI -->
+		<Grid>
+			<Grid.RowDefinitions>
+				<!-- Main area for the BlazorWebView -->
+				<RowDefinition Height="*" />
+				<!-- Footer for the native CameraView -->
+				<RowDefinition Height="10*" />
+			</Grid.RowDefinitions>
+
+			<!-- BlazorWebView hosting your Razor component -->
+			<BlazorWebView
+                x:Name="blazorWebView"
+                Grid.Row="0"
+                HostPage="wwwroot/index.html" />
+
+			<!-- Camera container: Always visible -->
+			<VerticalStackLayout
+                x:Name="CameraFooter"
+                Grid.Row="1"
+                Padding="10"
+                BackgroundColor="#e8f5e9"
+                IsVisible="True"
+                Spacing="10">
+				<!-- Back button -->
+				<Button
+                    x:Name="backButton"
+                    Text="Back"
+					BorderColor="blue"
+                    Clicked="BackButton_Clicked"
+                    BackgroundColor="white"
+                    TextColor="#007AFF" />
+
+				<!-- Camera frame with border and rounded corners -->
+				<Border
+                    x:Name="cameraBorder"
+                    Stroke="#CCCCCC"
+                    StrokeThickness="3"
+                    Padding="0"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    WidthRequest="300"
+                    HeightRequest="300">
+					<cv:CameraView
+                        x:Name="cameraView"
+                        BarCodeDetectionEnabled="True"
+                        BarCodeOptions="{Binding BarCodeOptions}"
+                        BarcodeDetected="CameraView_BarcodeDetected"
+                        CamerasLoaded="CameraView_CamerasLoaded"
+                        WidthRequest="300"
+                        HeightRequest="300"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center" />
+				</Border>
+
+				<!-- Custom control button (toggle) with a reduced (75%) size -->
+				<Grid
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    WidthRequest="75"
+                    HeightRequest="75">
+					<!-- The custom shape (toggleShape) behind the button -->
+					<shapes:Path
+                        x:Name="toggleShape"
+                        StrokeThickness="2"
+                        Stroke="Gray"
+                        Fill="Green"
+                        Data="M 5,5 L 5,65 L 65,35 Z" />
+					<!-- Transparent button for tapping -->
+					<Button
+                        x:Name="controlButton"
+                        Text="Start"
+                        Clicked="controlButton_Clicked"
+                        BackgroundColor="Transparent"
+                        TextColor="Transparent" />
+				</Grid>
+
+				<!-- Barcode result -->
+				<Label
+                    x:Name="barcodeResult"
+                    FontSize="20"
+                    Text="No barcode detected yet"
+                    TextColor="Black"
+                    HorizontalOptions="Center" />
+			</VerticalStackLayout>
+		</Grid>
+	</Grid>
+</ContentPage>

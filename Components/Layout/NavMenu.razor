@@ -1,0 +1,164 @@
+﻿@inject AuthService AuthService
+@inject NavigationManager Navigation
+@inject AuthService AuthService
+@inject IJSRuntime JS
+@inject DatabaseConnectionService DatabaseService
+@inject CarService CarService
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">Alan Jay Fleet</a>
+
+        <div class="user-info">
+            @if (DatabaseService?.GetActiveDatabaseKey() == "DevelopmentConnection")
+            {
+                <span style="color: red; font-weight: bold;">[DEV]</span>
+            }
+            <span class="inspector-name">@InspectorName</span>
+            <div class="dropdown" style="position: relative; display: inline-block;">
+                <button class="dropdown-button" id="dropdownButton" @onclick="ToggleDropdown">
+                    <span class="dots-icon">⋮</span>
+                    @if (CurrentPage == "vinnumscan"){
+                        @if (@CarService.CarCount > 0)
+                        {
+                            <span class="car-badge">@CarService.CarCount</span>
+                        }
+                    }
+                </button>
+
+                <ul class="dropdown-menu" style="@(IsDropdownVisible ? "display: block; right: 0; left: auto;" : "display: none")">
+                    <li><a href="/home" class="dropdown-item" @onclick="NavigateAndClose">Home</a></li>
+                    @if (CurrentPage != "settings")
+                    {
+                        <li><a href="/settings" class="dropdown-item" @onclick="NavigateAndClose">Settings</a></li>
+                    }
+                    
+
+                    @if (CurrentPage == "vinnumscan")
+                    {
+                        <li>
+                            <a href="/carlist" class="dropdown-item" @onclick="NavigateAndClose">
+                                Check-In List
+                                @if (@CarService.CarCount > 0)
+                                {
+                                    <span class="car-badge2">@CarService.CarCount</span>
+                                }
+                            </a>
+                        </li>
+                    }
+                    else if (CurrentPage == "windowsticker" || CurrentPage == "carlist" || CurrentPage == "reports" || CurrentPage == "home")
+                    {
+                        <li><a href="/vinnumscan" class="dropdown-item" @onclick="NavigateAndClose">Vin Scan</a></li>
+                    }
+                    <li><a href="#" class="dropdown-item" @onclick="HandleAuthClick">@AuthText</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string AuthText = "Login";
+    private string AuthLink = "/login";
+    private bool IsDropdownVisible = false;
+    private string CurrentPage = "";
+    private string VinInput { get; set; } = "";
+    private string InspectorName { get; set; } = "Unknown"; // Initialize
+    private DotNetObjectReference<NavMenu>? _dotNetRef;
+    protected override async Task OnInitializedAsync()
+    {
+        bool isLoggedIn = await AuthService.IsLoggedInAsync();
+        if (isLoggedIn)
+        {
+            AuthText = "Logout";
+            AuthLink = "#"; // Prevent default navigation
+        }
+
+        // Fetch the logged-in inspector name
+        InspectorName = await AuthService.GetCurrentInspectorAsync() ?? "Unknown";
+
+        CurrentPage = Navigation.Uri.Split('/').Last().ToLower();
+
+        Navigation.LocationChanged += HandleLocationChanged;
+        // ✅ Subscribe to CarCount updates
+        CarService.OnCarCountChanged += StateHasChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("registerOutsideClickHandler", _dotNetRef);
+        }
+    }
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        CurrentPage = Navigation.Uri.Split('/').Last().ToLower();
+        IsDropdownVisible = false;
+        StateHasChanged();
+    }
+
+    
+    private async Task HandleAuthClick()
+    {
+        if (AuthText == "Logout")
+        {
+            await AuthService.LogoutAsync(); // ✅ Clears login state
+
+            // ✅ Update UI after logout
+            AuthText = "Login";
+            AuthLink = "/login";
+
+            Navigation.NavigateTo("/login", forceLoad: true); // ✅ Redirect to login page
+            StateHasChanged(); // ✅ Force UI refresh
+        }
+    }
+   
+
+
+    [JSInvokable]
+    public void CloseDropdown()
+    {
+        if (IsDropdownVisible)
+        {
+            IsDropdownVisible = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ToggleDropdown()
+    {
+        IsDropdownVisible = !IsDropdownVisible;
+    }
+
+    private void NavigateAndClose()
+    {
+        IsDropdownVisible = false;
+    }
+
+    public void Dispose()
+    {
+        if (_dotNetRef != null)
+        {
+            _dotNetRef.Dispose();
+        }
+
+        // ✅ Unsubscribe from Navigation event to prevent memory leaks
+        Navigation.LocationChanged -= HandleLocationChanged;
+
+        // ✅ Unsubscribe from CarService event to ensure updates stop when component is disposed
+        CarService.OnCarCountChanged -= StateHasChanged;
+    }
+
+
+    private class CarModel
+    {
+        public string VIN { get; set; } = "";
+        public int VehicleID { get; set; }
+        public bool Damaged { get; set; }
+        public string Color { get; set; } = "";
+        public string Make { get; set; } = "";
+        public int Year { get; set; }
+        public string Note { get; set; } = "";
+    }
+}

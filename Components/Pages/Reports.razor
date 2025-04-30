@@ -1,0 +1,314 @@
+@page "/reports"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@namespace AlanJayApp.Pages
+@using System.Globalization
+@using System.Linq
+@using AlanJayApp.Models
+
+@if (IsLoading)
+{
+    <p>Loading data...</p>
+}
+else
+{
+    <div class="data-table-container">
+        <!-- Finance Delivered Receivables Table -->
+        <section class="Unnamed-table">
+            <h2>Delivered Receivables</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Units</th>
+                        <th>Shop Hrs</th>
+                        <th>Profit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (DeliveredReceivables == null || !DeliveredReceivables.Any())
+                    {
+                        <tr><td colspan="4">No Delivered Receivables data available.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in DeliveredReceivables)
+                        {
+                            <tr>
+                                <td>@(item.CompanyNumber > 0 ? item.CompanyNumber : "") @(item.CompanyName ?? "N/A")</td>
+                                <td>@(item.Units?.ToString("N0") ?? "0")</td>
+                                <td>@(item.TotalHours?.ToString("N0") ?? "0")</td>
+                                <td>@(item.Profit?.ToString("C") ?? "$0.00")</td>
+                            </tr>
+                        }
+                    }
+                    <tr>
+                        <td><strong>Totals:</strong></td>
+                        <td><strong>@TotalDeliveredUnits.ToString("N0")</strong></td>
+                        <td><strong>@TotalDeliveredHours.ToString("N0")</strong></td>
+                        <td><strong>@TotalDeliveredProfit.ToString("C")</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Finance Undelivered Receivables Table -->
+        <section class="Unnamed-table">
+            <h2>Undelivered Receivables</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Units</th>
+                        <th>Shop Hrs</th>
+                        <th>Profit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (UndeliveredReceivables == null || !UndeliveredReceivables.Any())
+                    {
+                        <tr><td colspan="4">No Undelivered Receivables data available.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in UndeliveredReceivables)
+                        {
+                            <tr>
+                                <td>@(item.CompanyNumber > 0 ? item.CompanyNumber : "") @(item.CompanyName ?? "N/A")</td>
+                                <td>@(item.Units?.ToString("N0") ?? "0")</td>
+                                <td>@(item.TotalHours?.ToString("N0") ?? "0")</td>
+                                <td>@(item.Profit?.ToString("C") ?? "$0.00")</td>
+                            </tr>
+                        }
+                    }
+                    <tr>
+                        <td><strong>Totals:</strong></td>
+                        <td><strong>@TotalUndeliveredUnits.ToString("N0")</strong></td>
+                        <td><strong>@TotalUndeliveredHours.ToString("N0")</strong></td>
+                        <td><strong>@TotalUndeliveredProfit.ToString("C")</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Monthly Report -->
+        <section class="Unnamed-table">
+            <h2>@(MonthlyFinance.FirstOrDefault()?.VantageMonth?.ToString("MMMM yyyy") ?? "Monthly")</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Paid</th>
+                        <th>Profit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (MonthlyFinance == null || !MonthlyFinance.Any())
+                    {
+                        <tr><td colspan="3">No Monthly Finance data available.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in MonthlyFinance)
+                        {
+                            <tr>
+                                <td>@(item.CompanyNumber > 0 ? item.CompanyNumber : "") @(item.CompanyName ?? "N/A")</td>
+                                <td>@(item.PaidCount?.ToString("N0") ?? "0")</td>
+                                <td>@(item.ProfitTotal?.ToString("C") ?? "$0.00")</td>
+                            </tr>
+                        }
+                    }
+                    <tr>
+                        <td><strong>Totals:</strong>
+                            <span style="color: red;">        @NotBookedCount?.NotBookedCount Deals Not Booked</span>
+                            </td>
+                        <td><strong>@TotalMonthlyPaidFor.ToString("N0")</strong></td>
+                        <td><strong>@TotalMonthlyProfit.ToString("C")</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+
+
+
+
+            <!-- Monthly Summary Section -->
+            <div class="summary-blocks">
+                <div>
+                    <strong>Accrued Interest:</strong>
+                    <span>
+                        @MonthlyEstInterest.ToString("C")
+                    </span>
+                </div>
+                <div>
+                    <strong>Actual Interest:</strong>
+                    <span class="@(MonthlyActualInterest < 0 ? "negative" : "positive")">
+                        @MonthlyActualInterest.ToString("C")
+                    </span>
+                </div>
+                <div>
+                    <strong>Adjustment:</strong>
+                    <span>@MonthlyAdjustmentFormatted</span>
+                </div>
+                <div>
+                    <strong>Admin Payroll:</strong>
+                    <span class="@(MonthlyPayroll < 0 ? "negative" : "positive")">
+                        @MonthlyPayroll.ToString("C")
+                    </span>
+                </div>
+                <div>
+                    <strong>Total Profit:</strong>
+                    <span>@MonthlyTotalProfitFormatted</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Yearly Report -->
+        <section class="Unnamed-table">
+            <h2>CYTD @DateTime.Now.Year (Closed Months)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Paid</th>
+                        <th>Profit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in YearlyFinance)
+                    {
+                        <tr>
+                            <td>@(item.CompanyNumber > 0 ? item.CompanyNumber : "") @(item.CompanyName ?? "N/A")</td>
+                            <td>@(item.PaidCount?.ToString("N0") ?? "0")</td>
+                            <td>@item.ProfitTotal?.ToString("C")</td>
+                        </tr>
+                    }
+                    <tr>
+                        <td>
+                            <strong>Totals:</strong>
+                            
+                        </td>
+                        <td><strong>@TotalYearlyPaidFor.ToString("N0")</strong></td>
+                        <td><strong>@TotalYearlyProfit.ToString("C")</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Yearly Summary Section -->
+            <div class="summary-blocks">
+                <div>
+                    <strong>Accrued Interest:</strong>
+                    <span>
+                        @YearlyEstInterest.ToString("C")
+                    </span>
+                </div>
+                <div>
+                    <strong>Actual Interest:</strong>
+                    <span class="@(YearlyActualInterest < 0 ? "negative" : "positive")">
+                        @YearlyActualInterest.ToString("C")
+                    </span>
+                </div>
+                <div>
+                    <strong>Adjustment:</strong>
+                    <span>@YearlyAdjustmentFormatted</span>
+                </div>
+                <div>
+                    <strong>Admin Payroll:</strong>
+                    <span class="@(YearlyPayroll < 0 ? "negative" : "positive")">
+                        @YearlyPayroll.ToString("C")
+                    </span>
+                </div>
+                <div>
+                    <strong>Total Profit:</strong>
+                    <span>@YearlyTotalProfitFormatted</span>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+}
+
+@code {
+    private bool IsLoading { get; set; } = true;
+    private List<FinanceDeliveredReceivables> DeliveredReceivables { get; set; } = new();
+    private List<FinanceUndeliveredReceivables> UndeliveredReceivables { get; set; } = new();
+    private List<FinanceMonthly> MonthlyFinance { get; set; } = new();
+    private List<FinanceYearly> YearlyFinance { get; set; } = new();
+    private FinancePayroll? PayrollData { get; set; }
+    private NotBooked? NotBookedCount { get; set; }
+
+    private decimal TotalDeliveredProfit, TotalUndeliveredProfit, TotalMonthlyProfit, TotalYearlyProfit;
+    private int TotalDeliveredUnits, TotalUndeliveredUnits, TotalMonthlyPaidFor, TotalYearlyPaidFor;
+    private double TotalDeliveredHours, TotalUndeliveredHours;
+    private decimal MonthlyEstInterest, MonthlyActualInterest, MonthlyPayroll;
+    private decimal YearlyEstInterest, YearlyActualInterest, YearlyPayroll;
+    private string MonthlyAdjustmentFormatted = "$0.00";
+    private string MonthlyTotalProfitFormatted = "$0.00";
+    private string YearlyAdjustmentFormatted = "$0.00";
+    private string YearlyTotalProfitFormatted = "$0.00";
+    private class NotBooked
+    {
+        public int NotBookedCount { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            DeliveredReceivables = await Http.GetFromJsonAsync<List<FinanceDeliveredReceivables>>("/api/reports/delivered") ?? new();
+            UndeliveredReceivables = await Http.GetFromJsonAsync<List<FinanceUndeliveredReceivables>>("/api/reports/undelivered") ?? new();
+            MonthlyFinance = await Http.GetFromJsonAsync<List<FinanceMonthly>>("/api/reports/monthly") ?? new();
+            YearlyFinance = await Http.GetFromJsonAsync<List<FinanceYearly>>("/api/reports/yearly") ?? new();
+            PayrollData = await Http.GetFromJsonAsync<FinancePayroll>("/api/reports/payroll");
+
+           
+
+            // Delivered Receivables Totals
+            TotalDeliveredProfit = DeliveredReceivables.Sum(x => x.Profit ?? 0);
+            TotalDeliveredUnits = DeliveredReceivables.Sum(x => x.Units ?? 0);
+            TotalDeliveredHours = DeliveredReceivables.Sum(x => x.TotalHours ?? 0);
+
+            // Undelivered Receivables Totals
+            TotalUndeliveredProfit = UndeliveredReceivables.Sum(x => x.Profit ?? 0);
+            TotalUndeliveredUnits = UndeliveredReceivables.Sum(x => x.Units ?? 0);
+            TotalUndeliveredHours = UndeliveredReceivables.Sum(x => x.TotalHours ?? 0);
+
+            // Monthly Finance Totals
+            TotalMonthlyPaidFor = MonthlyFinance.Sum(x => x.PaidCount ?? 0);
+            TotalMonthlyProfit = MonthlyFinance.Sum(x => x.ProfitTotal ?? 0);
+            MonthlyEstInterest = MonthlyFinance.Sum(x => x.EstInterest ?? 0) * -1;
+            MonthlyActualInterest = MonthlyFinance.Sum(x => x.ActualInterestTotal ?? 0);
+            MonthlyPayroll = PayrollData?.MonthPayroll ?? 0;
+
+            var monthlyAdjustment = MonthlyEstInterest + MonthlyActualInterest;
+            var monthlyTotalProfit = TotalMonthlyProfit + MonthlyEstInterest + MonthlyActualInterest + MonthlyPayroll;
+
+            MonthlyAdjustmentFormatted = monthlyAdjustment.ToString("C", CultureInfo.CurrentCulture);
+            MonthlyTotalProfitFormatted = monthlyTotalProfit.ToString("C", CultureInfo.CurrentCulture);
+
+            // Yearly Finance Totals
+            TotalYearlyPaidFor = YearlyFinance.Sum(x => x.PaidCount ?? 0);
+            TotalYearlyProfit = YearlyFinance.Sum(x => x.ProfitTotal ?? 0);
+            YearlyEstInterest = YearlyFinance.Sum(x => x.EstInterest ?? 0) * -1;
+            YearlyActualInterest = YearlyFinance.Sum(x => x.ActualInterestTotal ?? 0);
+            YearlyPayroll = PayrollData?.YearPayroll ?? 0;
+
+            var yearlyAdjustment = YearlyEstInterest + YearlyActualInterest;
+            var yearlyTotalProfit = TotalYearlyProfit + YearlyEstInterest + YearlyActualInterest + YearlyPayroll;
+
+            YearlyAdjustmentFormatted = yearlyAdjustment.ToString("C", CultureInfo.CurrentCulture);
+            YearlyTotalProfitFormatted = yearlyTotalProfit.ToString("C", CultureInfo.CurrentCulture); 
+            NotBookedCount = await Http.GetFromJsonAsync<NotBooked>("/api/reports/notbookedcount");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading reports: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+    
+}

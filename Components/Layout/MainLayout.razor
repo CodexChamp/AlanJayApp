@@ -1,0 +1,37 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+
+<div class="page">
+    <div class="sidebar">
+        @if (!isLoginPage)
+        {
+            <NavMenu /> <!-- ✅ Only show navbar if NOT on the login page -->
+        }
+    </div>
+
+    <main>
+        <article class="content px-3">
+            @Body
+        </article>
+    </main>
+</div>
+
+@code {
+    private bool isLoginPage = false;
+
+    protected override void OnInitialized()
+    {
+        CheckIfLoginPage();
+        Navigation.LocationChanged += (sender, args) =>
+        {
+            CheckIfLoginPage();
+            StateHasChanged();
+        };
+    }
+
+    private void CheckIfLoginPage()
+    {
+        isLoginPage = Navigation.Uri.Contains("#") || Navigation.Uri.Contains("login") || string.IsNullOrEmpty(Navigation.Uri);
+
+    }
+}

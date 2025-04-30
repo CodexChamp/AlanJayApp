@@ -1,0 +1,254 @@
+﻿@media (orientation: portrait) { /* Apply Light Mode */
+    :root {
+        --hc-bg-color: black;
+        --hc-text-color: yellow;
+        --hc-table-header: yellow;
+        --hc-table-row-dark: #222222;
+        --hc-table-row-light: #444444;
+        --hc-button-bg: yellow;
+        --hc-button-text: black;
+    }
+
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(100, 100, 100, .5);
+        display: flex;
+        justify-content: space-around;
+        padding: 5px 0;
+        box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+    }
+
+    .nav-button {
+        background: transparent;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        font-size: 2rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+
+        .nav-button:hover {
+            background: #45a049;
+        }
+
+    .scan-button {
+        font-size: 2rem;
+        color: #007bff;
+    }
+
+    .car-list {
+        width: 100%;
+        max-width: 100%;
+        border-collapse: collapse;
+        table-layout: auto;
+    }
+
+        .car-list th {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .car-list td {
+            padding: 10px;
+            text-align: center;
+            font-size: 16px;
+            border-bottom: 1px solid #ddd;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .car-list tr:nth-child(even) {
+            background-color: #eef6ee;
+        }
+
+        .car-list tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+
+        .car-list tr.damaged td {
+            color: red;
+            font-weight: bold;
+        }
+
+        .car-list .remove-button {
+            border: none;
+            outline: none;
+            background: none;
+            color: red;
+        }
+
+    /* High Contrast Mode */
+    .high-contrast-mode .bottom-nav {
+        background: var(--hc-bg-color) !important;
+    }
+
+    .high-contrast-mode .car-list {
+        background-color: var(--hc-bg-color) !important;
+        color: var(--hc-text-color) !important;
+    }
+
+        .high-contrast-mode .car-list th {
+            background-color: var(--hc-table-header) !important;
+            color: black !important;
+        }
+
+        .high-contrast-mode .car-list td {
+            color: var(--hc-text-color) !important;
+        }
+
+        .high-contrast-mode .car-list tr:nth-child(even) {
+            background-color: var(--hc-table-row-dark) !important;
+        }
+
+        .high-contrast-mode .car-list tr:nth-child(odd) {
+            background-color: var(--hc-table-row-light) !important;
+        }
+
+    .high-contrast-mode .nav-button,
+    .high-contrast-mode .scan-button {
+        background-color: var(--hc-button-bg) !important;
+        color: var(--hc-button-text) !important;
+    }
+
+        .high-contrast-mode .nav-button:hover {
+            background-color: var(--hc-text-color) !important;
+            color: var(--hc-bg-color) !important;
+        }
+}
+
+    :root {
+        --hc-bg-color: black;
+        --hc-text-color: yellow;
+        --hc-table-header: yellow;
+        --hc-table-row-dark: #222222;
+        --hc-table-row-light: #444444;
+        --hc-button-bg: yellow;
+        --hc-button-text: black;
+    }
+
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(100, 100, 100, .5);
+        display: flex;
+        justify-content: space-around;
+        padding: 5px 0;
+        box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+    }
+
+    .nav-button {
+        background: transparent;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        font-size: 2rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+
+        .nav-button:hover {
+            background: #45a049;
+        }
+
+    .scan-button {
+        font-size: 2rem;
+        color: #007bff;
+    }
+
+    .car-list {
+        width: 100%;
+        max-width: 100%;
+        border-collapse: collapse;
+        table-layout: auto;
+    }
+
+        .car-list th {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .car-list td {
+            padding: 10px;
+            text-align: center;
+            font-size: 16px;
+            border-bottom: 1px solid #ddd;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .car-list tr:nth-child(even) {
+            background-color: #eef6ee;
+        }
+
+        .car-list tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+
+        .car-list tr.damaged td {
+            color: red;
+            font-weight: bold;
+        }
+
+        .car-list .remove-button {
+            border: none;
+            outline: none;
+            background: none;
+            color: red;
+        }
+
+    /* High Contrast Mode */
+    .high-contrast-mode .bottom-nav {
+        background: var(--hc-bg-color) !important;
+    }
+
+    .high-contrast-mode .car-list {
+        background-color: var(--hc-bg-color) !important;
+        color: var(--hc-text-color) !important;
+    }
+
+        .high-contrast-mode .car-list th {
+            background-color: var(--hc-table-header) !important;
+            color: black !important;
+        }
+
+        .high-contrast-mode .car-list td {
+            color: var(--hc-text-color) !important;
+        }
+
+        .high-contrast-mode .car-list tr:nth-child(even) {
+            background-color: var(--hc-table-row-dark) !important;
+        }
+
+        .high-contrast-mode .car-list tr:nth-child(odd) {
+            background-color: var(--hc-table-row-light) !important;
+        }
+
+    .high-contrast-mode .nav-button,
+    .high-contrast-mode .scan-button {
+        background-color: var(--hc-button-bg) !important;
+        color: var(--hc-button-text) !important;
+    }
+
+        .high-contrast-mode .nav-button:hover {
+            background-color: var(--hc-text-color) !important;
+            color: var(--hc-bg-color) !important;
+        }
+

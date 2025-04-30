@@ -1,0 +1,667 @@
+﻿@namespace AlanJayApp.Components.Pages
+@page "/vinnumscan"
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject CarService CarService
+@using AlanJayApp.Data
+@inject ApplicationDbContext DbContext
+@using Microsoft.EntityFrameworkCore
+@inject IServiceProvider Services
+@using CommunityToolkit.Mvvm.Messaging
+@using AlanJayApp.wwwroot.Messages
+@using Camera.MAUI
+@using AlanJayApp.Services
+@implements IDisposable
+
+
+<div class="container" id="vinContainer" style="@ContainerColor">
+    <!-- Input Section (Row 1) -->
+    <div class="input-section">
+        <!-- Row 1: Input and Buttons (side by side) -->
+        <div class="input-buttons">
+            <button @onclick="ClearVin" class="btn btn-secondary">Clear</button>
+            <input @bind="VinInput"
+                   class="input-field"
+                   placeholder="Enter or Scan VIN..."
+                   @oninput="ConvertToUppercase"
+                   @onfocus="ShowSuggestions"
+                   @onblur="HideSuggestionsAfterDelay" />
+            <button @onclick="TriggerNativeScanner" class="btn btn-primary">
+                <img src="Images/qrcode.png" alt="QR Code" class="qr-icon" />
+            </button>
+        </div>
+
+        <!-- Row 2: Suggestions Dropdown -->
+        <div class="suggestions-container" id="vinDropdown" style="display: @(ShowVinDropdown ? "block" : "none")">
+            @foreach (var suggestion in VinSuggestions)
+            {
+                <div @onclick="() => SelectVinSuggestion(suggestion)" class="suggestion-item">
+                    @suggestion
+                </div>
+            }
+        </div>
+    </div>
+
+
+
+    <!-- Vehicle Details Section (Appears When Data is Found) -->
+    @if (VehicleDetails != null)
+    {
+        <div id="vehicleDetails">
+            <p>Quote ID: <strong>@VehicleDetails.QuoteID</strong></p>
+            <p>Agency: <strong>@VehicleDetails.Agency</strong></p>
+            <p>Description: <strong>@VehicleDetails.VmodelDesc</strong></p>
+            <p>Color: <strong>@VehicleDetails.Color</strong></p>
+            <p>Year: <strong>@VehicleDetails.Vyear</strong></p>
+            <p>Make: <strong>@VehicleDetails.Vmake</strong></p>
+            <p>
+                Location:
+                <InputText @bind-Value="EnteredLocation"
+                    class="form-control d-inline-block"
+                    style="width:150px" />
+            </p>
+            @if (!IsLocationNA)
+            {
+                        <p>Key Code: <strong>@VehicleDetails.KeyCode</strong></p>
+            }
+            else
+            {
+                        <p>
+                            Key Code:
+                            <InputText @bind-Value="EnteredKeyCode" class="form-control"
+                                       style="width:120px; display:inline-block;" />
+                        </p>
+            }
+
+            <!-- ✅ Show only if location is 'na' -->
+            @if (IsLocationNA)
+            {
+                <label>
+                    <input type="checkbox" @bind="IsDamaged" />
+                    <span>Damaged?</span>
+                </label>
+                @if (IsDamaged)
+                {
+                    <div class="note-input-container">
+                        <textarea @bind="DamageDescription" class="form-control"
+                        placeholder="Describe any damage or issues..."
+                        maxlength="250"
+                        @oninput="@(async e => {
+                                  await HandleDamageChange(e);
+                                  await JS.InvokeVoidAsync("autoExpand", damageTextAreaRef);
+                                  })"
+                        @ref="damageTextAreaRef">
+                        </textarea>
+
+                    </div>
+                }
+            }
+
+            <!-- ✅ Hide Check-In Button if Location is NOT 'na' -->
+
+                <div class="action-buttons">
+                    <button @onclick="UpdateLocationAsync"
+                        class="btn btn-primary me-2">
+                        Update Location
+                    </button>
+                    <button @onclick="SaveKeyTagAsync"
+                        class="btn btn-primary me-2">
+                        KeyTag
+                    </button>
+                </div>
+                <div class="action-buttons">
+                    @if (IsLocationNA)
+                    {
+                        <button @onclick="ToggleCarCheckIn" class="action-button" style="background-color: @(IsCarCheckedIn ? "red" : "green");">
+                            @(IsCarCheckedIn ? "REMOVE" : "Check IN")
+                        </button>
+                    }
+
+                    <button @onclick="OpenWindowSticker" class="action-button2">Window Sticker</button>
+
+                </div>
+
+            
+
+        </div>
+    }
+</div>
+
+
+<script>
+    function limitText(field, maxLength) {
+    if (field.value.length > maxLength) {
+    field.value = field.value.substring(0, maxLength);
+    }
+    }
+    function autoExpand(textarea) {
+    textarea.style.height = "auto"; // Reset height
+    textarea.style.height = textarea.scrollHeight + "px"; // Expand to fit content
+    }
+
+</script>
+@code {
+    private void DetachIfTracked(string vin)
+    {
+        var tracked = DbContext.ChangeTracker
+          .Entries<VehiclesScanned>()
+          .FirstOrDefault(e => e.Entity.VIN == vin);
+        if (tracked != null)
+            DbContext.Entry(tracked.Entity).State = EntityState.Detached;
+    }
+
+
+    private async Task TriggerNativeScanner()
+    {
+        // Use Shell navigation to go to the vinnumscan page
+        await App.Current.MainPage.Navigation.PushAsync(new VinNumScanPage());
+    }
+
+    [JSInvokable]
+    public void LogFromJS(string message)
+    {
+        System.Diagnostics.Debug.WriteLine($"[JS] {message}");
+    }
+
+
+
+
+
+    private string VinInput { get; set; } = "";
+    private List<string> VinSuggestions { get; set; } = new();
+    private VehicleInfo? VehicleDetails { get; set; }
+    private bool IsDamaged { get; set; } = false; // ✅ Track checkbox state
+    private string DamageDescription { get; set; } = ""; // ✅ Holds Note input
+    private bool IsCarCheckedIn { get; set; } = false;
+    private List<ScannedCar> CarList { get; set; } = new();
+    private string ContainerColor => VehicleDetails?.Location == "NA" ? "background-color: #d3d3d3;" : "background-color: #e6f9e6;";
+    private string StoredVIN { get; set; } = ""; 
+    private bool ShowVinDropdown { get; set; } = false;
+    private string Location => VehicleDetails?.Location?.ToLower() ?? "na"; // Convert to lowercase & handle null
+    private bool IsLocationNA => Location == "na"; // ✅ True if 'na', false otherwise
+    private ElementReference damageTextAreaRef; // Stores the reference to the textarea
+    private string EnteredKeyCode { get; set; } = string.Empty;
+    // holds the user-edited location
+    private string EnteredLocation { get; set; } = "NA";
+
+    private string GetVehicleContainerStyle()
+    {
+        return IsLocationNA ? "background-color: #d3d3d3;" : "background-color: #e6f9e6;";
+    }
+    private async Task LoadCarList()
+    {
+        var storedCars = await JS.InvokeAsync<string>("localStorage.getItem", "carList");
+        CarList = string.IsNullOrEmpty(storedCars) ? new() : System.Text.Json.JsonSerializer.Deserialize<List<ScannedCar>>(storedCars) ?? new();
+        IsCarCheckedIn = CarList.Any(c => c.VIN == VinInput);
+    }
+
+
+    // Good practice: Unsubscribe when the component is disposed
+    public void Dispose()
+    {
+        VinScannerService.OnBarcodeScanned -= HandleVinScanned;
+    }
+    private void ToggleDamageNote(ChangeEventArgs e)
+    {
+        IsDamaged = (bool)e.Value;
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        // Load the saved VIN from storage
+        VinInput = (await JS.InvokeAsync<string>("localStorage.getItem", "savedVIN"))?.Trim() ?? "";
+        Console.WriteLine($"[DEBUG] Loaded VIN from storage: {VinInput}");
+
+        // Subscribe to the barcode scanned event
+        VinScannerService.OnBarcodeScanned += HandleVinScanned;
+
+        try
+        {
+            // Load saved cars from Local Storage
+            var storedCars = await JS.InvokeAsync<string>("localStorage.getItem", "carList");
+            CarList = string.IsNullOrEmpty(storedCars)
+                ? new()
+                : System.Text.Json.JsonSerializer.Deserialize<List<ScannedCar>>(storedCars) ?? new();
+
+            Console.WriteLine($"[DEBUG] Loaded {CarList.Count} cars from storage.");
+
+            // Process the loaded VIN
+            await ProcessVinAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error accessing localStorage: {ex.Message}");
+        }
+        if (VinInput != null)
+        {
+            NormalizeVIN(VinInput);
+        }
+    }
+    private async void HandleVinScanned(string scannedVin)
+    {
+        // Update VinInput with the scanned VIN
+        VinInput = scannedVin?.Trim() ?? "";
+        Console.WriteLine($"[DEBUG] VIN updated from scan: {VinInput}");
+
+        // Process the new VIN (format, check CarList, fetch details, etc.)
+        await ProcessVinAsync();
+    }
+
+
+    private async Task HandleDamageChange(ChangeEventArgs e)
+    {
+        DamageDescription = e.Value?.ToString() ?? "";
+
+        if (!string.IsNullOrWhiteSpace(DamageDescription))
+        {
+            // ✅ Automatically remove car when damage text is changed
+            var existingCar = CarList.FirstOrDefault(c => c.VIN == VinInput);
+            if (existingCar != null)
+            {
+                CarList.Remove(existingCar);
+                CarService.RemoveCar();
+                IsCarCheckedIn = false;
+
+                Console.WriteLine($"[DEBUG] Car with VIN {VinInput} removed due to damage note change.");
+                await JS.InvokeVoidAsync("localStorage.setItem", "carList", System.Text.Json.JsonSerializer.Serialize(CarList));
+                StateHasChanged(); // 🔄 Refresh UI
+            }
+        }
+    }
+    private async Task SaveVinLocally()
+    {
+        await JS.InvokeVoidAsync("localStorage.setItem", "savedVIN", VinInput);
+    }
+
+    private CancellationTokenSource _cts = new CancellationTokenSource(); // ✅ Track active requests
+
+    private async Task ConvertToUppercase(ChangeEventArgs e)
+    {
+        // ✅ Keep dashes, remove only unwanted characters
+        VinInput = e.Value?.ToString()?.ToUpper() ?? "";
+        await SaveVinLocally();
+
+        // ✅ Recalculate check-in status with dashes intact
+        IsCarCheckedIn = CarList.Any(c => NormalizeVIN(c.VIN) == NormalizeVIN(VinInput));
+        Console.WriteLine($"[DEBUG] VIN changed to {VinInput}, IsCarCheckedIn updated: {IsCarCheckedIn}");
+
+        if (VinInput.Length >= 4)
+        {
+            await FetchVinSuggestions();
+        }
+        else
+        {
+            ShowVinDropdown = false; // Hide dropdown if less than 4 characters
+        }
+
+        await FetchVehicleDetails(VinInput); // Fetch details on every VIN input change
+        StateHasChanged();
+    }
+
+    // ✅ Normalize VINs to ensure correct comparisons
+    private string NormalizeVIN(string vin) => vin.ToUpper().Trim();
+
+    
+    private async Task ProcessVinAsync()
+    {
+        VinInput = VinInput?.ToUpper().Trim() ?? string.Empty;
+        await JS.InvokeVoidAsync("localStorage.setItem", "savedVIN", VinInput);
+
+        IsCarCheckedIn = CarList.Any(c => c.VIN.ToUpper().Trim() == VinInput);
+
+        if (!string.IsNullOrEmpty(VinInput) && VinInput.Length >= 4)
+        {
+            await FetchVehicleDetails(VinInput);
+        }
+
+        var scanned = CarList
+    .FirstOrDefault(c => c.VIN.Equals(VinInput, StringComparison.OrdinalIgnoreCase));
+
+        if (scanned != null)
+        {
+            EnteredKeyCode = scanned.KeyCode ?? string.Empty;
+            IsDamaged = scanned.Damaged;
+            DamageDescription = scanned.Note ?? string.Empty;
+        }
+        else
+        {
+            EnteredKeyCode = VehicleDetails?.KeyCode ?? string.Empty;
+            if (!IsCarCheckedIn)
+            {
+                IsDamaged = false;
+                DamageDescription = string.Empty;
+            }
+        }
+
+        EnteredLocation = VehicleDetails?.Location ?? "NA";
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+
+
+    private async Task FetchVinSuggestions()
+    {
+        if (string.IsNullOrWhiteSpace(VinInput) || VinInput.Length < 4) return;
+
+        // ✅ Cancel previous requests
+        _cts.Cancel();
+        _cts = new CancellationTokenSource();
+        var token = _cts.Token;
+
+        try
+        {
+            VinSuggestions.Clear(); // Clear previous suggestions before adding new ones
+
+            var suggestions = await Http.GetFromJsonAsync<List<string>>($"/api/vin/suggestions?query={VinInput}", token);
+
+            if (token.IsCancellationRequested) return; // ✅ Skip if request was canceled
+
+            // ✅ Only show suggestions if more than 3 results
+            if (suggestions != null)
+            {
+                VinSuggestions = new List<string>(suggestions);
+                ShowVinDropdown = true;
+            }
+            else
+            {
+                ShowVinDropdown = false; // ✅ Hide dropdown if <= 3 suggestions
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("[DEBUG] FetchVinSuggestions request was canceled.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] FetchVinSuggestions failed: {ex.Message}");
+        }
+    }
+
+
+    private void ShowSuggestions()
+    {
+        if (VinSuggestions.Any())
+        {
+            ShowVinDropdown = true;
+        }
+    }
+
+    private async Task SelectVinSuggestion(string vin)
+    {
+        if (string.IsNullOrWhiteSpace(vin)) return;
+
+        Console.WriteLine($"Selected VIN: {vin}");
+
+
+        VinInput = vin;
+        VinSuggestions.Clear();
+        ShowVinDropdown = false;
+        await SaveVinLocally();
+        await FetchVehicleDetails(vin);
+    }
+
+    private async Task HideSuggestionsAfterDelay()
+    {
+        await Task.Delay(200);
+        ShowVinDropdown = false;
+        StateHasChanged();
+    }
+    private async Task ToggleCarCheckIn()
+    {
+        var existingCar = CarList.FirstOrDefault(c => c.VIN == VinInput);
+        if (existingCar != null)
+        {
+            CarList.Remove(existingCar);
+            CarService.RemoveCar();
+            IsCarCheckedIn = false;
+        }
+        else
+        {
+            CarList.Add(new ScannedCar
+                {
+                    VIN = VinInput,
+                    Color = VehicleDetails.Color ?? "NA",
+                    Make = VehicleDetails.Vmake ?? "Unknown",
+                    Year = VehicleDetails.Vyear,
+                    VehicleID = VehicleDetails.VehicleID,
+					KeyCode = VehicleDetails.KeyCode,
+                    Damaged = IsDamaged,
+                    Note = DamageDescription
+                });
+            IsCarCheckedIn = true;
+            CarService.AddCar();
+        }
+        await JS.InvokeVoidAsync("localStorage.setItem", "carList", System.Text.Json.JsonSerializer.Serialize(CarList));
+    }
+
+
+
+    private async Task FetchVehicleDetails(string vin)
+    {
+        if (string.IsNullOrWhiteSpace(vin))
+        {
+            Console.WriteLine("[ERROR] FetchVehicleDetails was called with an EMPTY VIN.");
+            return;
+        }
+
+        try
+        {
+            string formattedVin = vin.Replace("-", "").Trim(); // ✅ Normalize VIN for matching
+
+            Console.WriteLine($"[DEBUG] Searching for VIN in database: {formattedVin}");
+
+            VehicleDetails = await (from v in DbContext.AzVehicles
+                                    join q in DbContext.AzQuoteSummary on v.QuoteID equals q.QuoteID into quoteJoin
+                                    from q in quoteJoin.DefaultIfEmpty()
+                                    join a in DbContext.AzAgency on q.Agency_Contact equals a.AgencyContactID into agencyJoin
+                                    from a in agencyJoin.DefaultIfEmpty()
+                                    where v.VIN.Replace("-", "").Trim() == formattedVin
+                                    select new VehicleInfo
+                                        {
+                                            VehicleID = v.VehicleID,
+                                            QuoteID = v.QuoteID,
+                                            Agency = a != null ? a.Agency : "NA",
+                                            VmodelDesc = v.ModDesc ?? "NA",
+                                            Color = v.Color ?? "Unknown",
+                                            Vyear = v.Vyear ?? "Unknown",
+                                            Vmake = v.Vmake ?? "Unknown",
+                                            Location = v.Location ?? "NA",
+											KeyCode = v.KeyCode ?? "NA"
+                                        }).FirstOrDefaultAsync();
+
+            if (VehicleDetails != null)
+            {
+                Console.WriteLine($"[DEBUG] Vehicle found! …");
+
+                // seed your edit-fields from the freshly loaded data
+                EnteredLocation = VehicleDetails.Location ?? "NA";
+                EnteredKeyCode = VehicleDetails.KeyCode ?? string.Empty;
+
+                StateHasChanged(); // 🔄 refresh the UI
+            }
+
+            else
+            {
+                Console.WriteLine("[ERROR] No vehicle details found.");
+                VehicleDetails = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] Exception retrieving vehicle details: {ex.Message}");
+        }
+    }
+
+
+
+    // ✅ Fetch Details from API
+    private async Task FetchCarDetails()
+    {
+        if (!CarList.Any()) return;
+
+        var vinList = CarList.Select(c => c.VIN).ToList();
+        var response = await Http.PostAsJsonAsync("/api/carlist/details", vinList);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var jsonResponse = await response.Content.ReadAsStringAsync(); // 🔍 Log response
+            Console.WriteLine($"API Response: {jsonResponse}");
+
+            try
+            {
+                var carDetails = System.Text.Json.JsonSerializer.Deserialize<List<ScannedCar>>(jsonResponse);
+                if (carDetails != null)
+                {
+                    foreach (var car in CarList)
+                    {
+                        var details = carDetails.FirstOrDefault(c => c.VIN == car.VIN);
+                        if (details != null)
+                        {
+                            car.Color = details.Color;
+                            car.Make = details.Make;
+                            car.Year = details.Year;
+                        }
+                    }
+                    await JS.InvokeVoidAsync("localStorage.setItem", "carList", System.Text.Json.JsonSerializer.Serialize(CarList));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"JSON Deserialization Error: {ex.Message}");
+                await JS.InvokeVoidAsync("console.error", $"JSON Deserialization Error: {ex.Message}");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"API request failed: {response.StatusCode}");
+        }
+    }
+    private async Task ClearVin()
+    {
+        VinInput = "";
+        VehicleDetails = null;
+        VinSuggestions.Clear();
+        ShowVinDropdown = false;
+        await JS.InvokeVoidAsync("localStorage.removeItem", "savedVIN");
+        StateHasChanged();
+    }
+  
+
+
+
+    private void OpenWindowSticker()
+    {
+        if (!string.IsNullOrWhiteSpace(VinInput))
+        {
+            Navigation.NavigateTo($"/windowsticker");
+
+        }
+    }
+
+    // full save (KeyTag) → type 2
+    private async Task SaveKeyTagAsync()
+    {
+        var vin = VinInput ;
+        DetachIfTracked(vin);
+
+        var entry = new VehiclesScanned
+            {
+                VIN = vin,
+                vehicleID = VehicleDetails.VehicleID,
+                damagedInTransit = IsDamaged,
+                note = DamageDescription ?? "",
+                location = EnteredLocation,
+                KeyCode = EnteredKeyCode ?? "",
+                KeyType = 2
+            };
+        DbContext.VehiclesScanned.Add(entry);
+        await DbContext.SaveChangesAsync();
+        Console.WriteLine($"✔ KeyTag recorded for {vin}");
+        await FetchVehicleDetails(vin);
+    }
+
+    // location-only check-in → type 3
+    private async Task UpdateLocationAsync()
+    {
+        var vin = VinInput;
+        DetachIfTracked(vin);
+
+        var entry = new VehiclesScanned
+            {
+                VIN = vin,
+                vehicleID = VehicleDetails.VehicleID,
+                damagedInTransit = IsDamaged,
+                note = DamageDescription ?? "",
+                location = EnteredLocation,
+                KeyCode = EnteredKeyCode ?? "",
+                KeyType = 3
+            };
+        DbContext.VehiclesScanned.Add(entry);
+        await DbContext.SaveChangesAsync();
+        Console.WriteLine($"✔ Location update recorded for {vin}");
+        VehicleDetails.Location = EnteredLocation;
+        StateHasChanged();
+    }
+
+
+
+
+    
+
+    private class VehicleInfo
+    {
+        public int VehicleID { get; set; }
+        public int? QuoteID { get; set; }
+        public string? Agency { get; set; }
+        public string? VmodelDesc { get; set; }
+        public string? Color { get; set; }
+        public string? Vyear { get; set; }
+        public string? Vmake { get; set; }
+        public string? Location { get; set; }
+		public string? KeyCode { get; set; } // ✅ Add KeyCode property
+    }
+
+    private class ScannedCar
+    {
+        public string VIN { get; set; } = "";
+        public int VehicleID { get; set; }
+        public bool Damaged { get; set; }
+        public string Note { get; set; } = "";
+        public string Color { get; set; } = ""; // ✅ Fix - Add Color
+        public string Make { get; set; } = ""; // ✅ Fix - Add Make
+        public string Year { get; set; } = ""; // ✅ Fix - Add Year
+		public string? KeyCode { get; set; }
+        public int KeyType { get; set; }// ✅ Add KeyCode property
+    }
+
+}
+<script>
+     function adjustDropdownWidth() {
+        let dropdown = document.getElementById("vinDropdown");
+        let suggestions = dropdown ? dropdown.querySelectorAll(".suggestion-item") : [];
+
+        if (!dropdown || suggestions.length === 0) return;
+
+        let maxWidth = 0;
+        let tempSpan = document.createElement("span");
+        tempSpan.style.visibility = "hidden";
+        tempSpan.style.whiteSpace = "nowrap";
+        tempSpan.style.position = "absolute";
+        tempSpan.style.fontSize = getComputedStyle(dropdown).fontSize;
+
+        document.body.appendChild(tempSpan);
+
+        suggestions.forEach((item) => {
+            tempSpan.textContent = item.textContent.trim();
+            maxWidth = Math.max(maxWidth, tempSpan.offsetWidth);
+        });
+
+        document.body.removeChild(tempSpan);
+
+        // Apply calculated width with some padding
+        dropdown.style.width = `${maxWidth + 20}px`;
+    }
+
+
+</script>

@@ -1,0 +1,189 @@
+﻿@page "/settings"
+@inject DatabaseConnectionService DatabaseService
+@inject IConfiguration Configuration
+@inject AppSettings AppSettings
+@using AlanJayApp.Data
+@using Microsoft.Extensions.Configuration
+@using System.Text.Json
+@inject IJSRuntime JS
+<script src="js/app.js"></script>
+@inject ILogger<WindowSticker> Logger
+@using Microsoft.Extensions.Logging
+@using Microsoft.EntityFrameworkCore
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject AuthService AuthService
+@inject ApplicationDbContext DbContext
+
+<h2> Settings</h2>
+
+<!-- Appearance Settings -->
+<h3>Appearance</h3>
+<label>Theme:</label>
+<select @bind="AppSettings.Theme" class="form-control">
+    <option>Light</option>
+    <option>High Contrast</option>
+</select>
+
+@*<label>Font Size:</label>
+<select @bind="AppSettings.FontSize" class="form-control">
+    <option>Small</option>
+    <option>Medium</option>
+    <option>Large</option>
+</select>
+
+<!-- Security Settings -->
+<h3>Security</h3>
+<label>Enable 2FA:</label>
+<input type="checkbox" @bind="AppSettings.Enable2FA" />
+
+<label>Auto Logout (Minutes):</label>
+<input type="number" @bind="AppSettings.AutoLogoutMinutes" class="form-control" />
+
+<!-- Performance Settings -->
+<h3>Performance</h3>
+<label>Enable Caching:</label>
+<input type="checkbox" @bind="AppSettings.EnableCaching" />
+
+<label>Enable Compression:</label>
+<input type="checkbox" @bind="AppSettings.EnableCompression" />
+
+<label>Enable CDN:</label>
+<input type="checkbox" @bind="AppSettings.EnableCDN" />*@
+@if (InspectorName == "ayandow")
+{
+    <h3>Database Connection</h3>
+    <label>Select Database:</label>
+    <select @onchange="e => ChangeDatabase(e.Value.ToString())" class="form-control">
+        <option value="@SelectedDatabase" selected>
+            @(SelectedDatabase == "DefaultConnection" ? "Production Database" : "Development Database")
+        </option>
+        <option value="@(SelectedDatabase == "DefaultConnection" ? "DevelopmentConnection" : "DefaultConnection")">
+            @(SelectedDatabase == "DefaultConnection" ? "Development Database" : "Production Database")
+        </option>
+    </select>
+
+
+
+}
+
+
+
+<!-- Save Button -->
+<button @onclick="SaveSettings" class="btn btn-primary">Save Settings</button>
+
+@code {
+    private string InspectorName { get; set; } = "";
+    private string DebugInfo { get; set; } = "";
+    private string _selectedDatabase = "DefaultConnection";
+
+
+    private string SelectedDatabase
+    {
+        get => _selectedDatabase;
+        set
+        {
+            if (_selectedDatabase != value) // ✅ Only update if it's actually different
+            {
+                _selectedDatabase = value;
+                Task.Run(async () => await ChangeDatabase(_selectedDatabase)); // ✅ Avoid sync issues
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load settings from localStorage
+        var storedSettings = await JS.InvokeAsync<string>("localStorage.getItem", "appSettings");
+        var storedDatabase = await JS.InvokeAsync<string>("localStorage.getItem", "selectedDatabase");
+
+        // ✅ Ensure SelectedDatabase is set correctly based on localStorage
+        _selectedDatabase = storedDatabase ?? "DefaultConnection";
+
+        // ✅ Explicitly update the active database
+        DatabaseService.SetActiveDatabase(_selectedDatabase);
+
+        if (!string.IsNullOrEmpty(storedSettings))
+        {
+            AppSettings = JsonSerializer.Deserialize<AppSettings>(storedSettings) ?? new AppSettings();
+        }
+        else
+        {
+            AppSettings = new AppSettings(); // Default settings if none exist
+        }
+
+        // ✅ Ensure the JavaScript file is loaded first
+        await JS.InvokeVoidAsync("eval", @"
+        var script = document.createElement('script');
+        script.src = 'js/app.js';
+        script.onload = function() {
+            console.log('App settings script loaded.');
+        };
+        document.head.appendChild(script);
+        ");
+
+        InspectorName = await AuthService.GetCurrentInspectorAsync() ?? "Unknown";
+        DebugInfo += $"Retrieved Inspector: {InspectorName}<br>";
+
+        Console.WriteLine("JavaScript file loaded.");
+        Console.WriteLine($"[DEBUG] Loaded Database: {_selectedDatabase}");
+
+        // ✅ Force the UI to update immediately
+        StateHasChanged();
+    }
+
+
+
+    private async Task ApplySettings()
+    {
+        // Apply UI Settings
+        await JS.InvokeVoidAsync("applyTheme", AppSettings.Theme);
+        await JS.InvokeVoidAsync("applyFontSize", AppSettings.FontSize);
+
+        // Apply Performance Settings
+        if (AppSettings.EnableCaching) await JS.InvokeVoidAsync("enableCaching");
+        else await JS.InvokeVoidAsync("disableCaching");
+
+        if (AppSettings.EnableCompression) await JS.InvokeVoidAsync("enableCompression");
+        else await JS.InvokeVoidAsync("disableCompression");
+
+        if (AppSettings.EnableCDN) await JS.InvokeVoidAsync("enableCDN");
+        else await JS.InvokeVoidAsync("disableCDN");
+
+        Console.WriteLine("All settings applied on page load.");
+    }
+
+    private async Task SaveSettings()
+    {
+        var jsonSettings = JsonSerializer.Serialize(AppSettings, new JsonSerializerOptions { WriteIndented = true });
+        await JS.InvokeVoidAsync("localStorage.setItem", "appSettings", jsonSettings);
+        Console.WriteLine("Settings saved successfully!");
+
+        // Apply all settings immediately after saving
+        await ApplySettings();
+    }
+    private async Task ChangeDatabase(string databaseKey)
+    {
+        if (_selectedDatabase == databaseKey) return; // ✅ Prevent redundant updates
+
+        _selectedDatabase = databaseKey ?? "DefaultConnection";
+
+        Console.WriteLine($"Switching to database: {_selectedDatabase}");
+
+        DatabaseService.SetActiveDatabase(_selectedDatabase);
+
+        // Store the selection for persistence
+        await JS.InvokeVoidAsync("localStorage.setItem", "selectedDatabase", _selectedDatabase);
+
+        // ✅ Force a full page refresh to update the NavMenu
+        Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+    }
+
+
+
+
+
+
+
+}
