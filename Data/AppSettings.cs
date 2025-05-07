@@ -21,6 +21,8 @@ namespace AlanJayApp.Data
         public int AutoLogoutMinutes { get; set; } = 10;
         public bool ShowDebugLogs { get; set; } = false;
         public string Language { get; set; } = "English";
+        
+        public string BlobStorageConnectionString { get; set; }
     }
 }
 

@@ -28,8 +28,8 @@
         <ApplicationId>com.companyname.alanjayapp</ApplicationId>
 
         <!-- Versions -->
-        <ApplicationDisplayVersion>1.0.4</ApplicationDisplayVersion>
-        <ApplicationVersion>4</ApplicationVersion>
+        <ApplicationDisplayVersion>1.0.5</ApplicationDisplayVersion>
+        <ApplicationVersion>5</ApplicationVersion>
 
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">14.2</SupportedOSPlatformVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">14.0</SupportedOSPlatformVersion>
@@ -45,6 +45,8 @@
 		<AndroidSigningStorePass>122221</AndroidSigningStorePass>
 		<AndroidSigningKeyAlias>MyAlias</AndroidSigningKeyAlias>
 		<AndroidSigningKeyPass>122221</AndroidSigningKeyPass>
+		<AndroidEnableNativeDebugSymbols>true</AndroidEnableNativeDebugSymbols>
+		<AndroidSymbolPackageFormat>zip</AndroidSymbolPackageFormat>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-android|AnyCPU'">
@@ -53,7 +55,7 @@
 
     <ItemGroup>
          <!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\icon.png"/>
+		<MauiIcon Include="Resources\AppIcon\icon.png" />
         <!-- Splash Screen -->
         <MauiSplashScreen Include="wwwroot\Images\loading_screen.png" Color="fefeff" />
 
@@ -96,7 +98,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Azure.Core" Version="1.38.0" />
+        <PackageReference Include="Azure.Core" Version="1.44.1" />
+        <PackageReference Include="Azure.Storage.Blobs" Version="12.24.0" />
         <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
         <PackageReference Include="Camera.MAUI" Version="1.5.1" />
         <PackageReference Include="Camera.MAUI.ZXing" Version="1.0.0" />
@@ -105,6 +108,7 @@
         <PackageReference Include="Google.Apis.Auth" Version="1.69.0" />
         <PackageReference Include="Google.Apis.Sheets.v4" Version="1.69.0.3694" />
         <PackageReference Include="HtmlAgilityPack" Version="1.12.0" />
+        <PackageReference Include="MailKit" Version="4.12.0" />
         <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="8.0.11" />
         <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions" Version="9.0.2" />
