@@ -22,7 +22,7 @@
     <!-- VIN Input -->
     <div class="input-section">
         <div class="input-buttons">
-            <button @onclick="ClearVin" class="btn btn-secondary">Clear</button>
+            <button @onclick="ClearVin" class="btn btn-secondary" disabled="@IsBusy">Clear</button>
             <input @bind="VinInput"
                    @oninput="OnVinInput"
                    class="input-field"
@@ -30,7 +30,7 @@
                    placeholder="Enter or Scan VIN..."
                    @onfocus="ShowSuggestions"
                    @onblur="HideSuggestionsAfterDelay" />
-            <button @onclick="TriggerNativeScanner" class="btn btn-primary">
+            <button @onclick="TriggerNativeScanner" class="btn btn-primary" disabled="@IsBusy">
                 <img src="Images/qrcode.png" alt="QR Code" class="qr-icon" />
             </button>
         </div>
@@ -44,7 +44,7 @@
         </div>
     </div>
 
-<!-- Vehicle Details -->
+    <!-- Vehicle Details -->
     @if (VehicleDetails != null)
     {
         <div id="vehicleDetails" style="margin-top:15px;">
@@ -57,38 +57,32 @@
 
             <div class="form-group">
                 <label>Key Code:</label>
-                <InputText @bind-Value="EnteredKeyCode" class="form-control d-inline-block" style="width:120px;" />
-                @if (KeyCodeChanged)
+                <InputText @bind-Value="EnteredKeyCode" class="form-control d-inline-block" style="width:120px;" disabled="@IsBusy" />
+                @if (!IsBusy && KeyCodeChanged)
                 {
                     <span style="color:green; margin-left:5px;">✓</span>
                 }
             </div>
 
-            <!-- ★ Location as a dropdown ★ -->
-      <div class="form-group">
+            <div class="form-group">
                 <label>Location:</label>
                 <select @onchange="OnLocationChanged"
                         value="@EnteredLocation"
                         class="form-control d-inline-block"
-                        style="width:150px;">
-                    <!-- RANCH always first -->
+                        style="width:150px;" disabled="@IsBusy">
                     <option value="RANCH">RANCH</option>
-
-                    <!-- all the rest -->
                     @foreach (var loc in LocationOptions.Where(x => "RANCH" != x))
                     {
                         <option value="@loc">@loc</option>
                     }
-
-                    <!-- “Clear” sentinel in red -->
                     <option value="__CLEAR__" style="color:red">Clear</option>
                 </select>
 
-                @if (LocationChanged)
+                @if (!IsBusy && LocationChanged)
                 {
                     <span style="color:green;margin-left:5px">✓</span>
                 }
-      </div>
+            </div>
 
             <div class="form-group">
                 <label>Damage Note:</label>
@@ -97,22 +91,29 @@
                           placeholder="Describe any damage or issues..."
                           maxlength="250"
                           @oninput="OnDamageInput"
-                          style="resize:vertical;"></textarea>
+                          style="resize:vertical;" disabled="@IsBusy"></textarea>
             </div>
 
             <div class="action-buttons">
                 @if (CanSave)
                 {
-                    <button class="btn btn-primary me-2" @onclick="SaveAsync">Save</button>
+                    <button class="btn btn-primary me-2" @onclick="QueueSaveAsync" disabled="@IsBusy">Save</button>
                 }
-                <button class="btn btn-secondary me-2" @onclick="SaveKeyTagAsync">KeyTag</button>
-                <button class="btn btn-info" @onclick="OpenWindowSticker">Window Sticker</button>
-                <span style="margin-left:10px; color:@SaveStatusColor;">@SaveStatus</span>
+                <button class="btn btn-secondary me-2" @onclick="QueueSaveKeyTagAsync" disabled="@IsBusy">KeyTag</button>
+                <button class="btn btn-info" @onclick="OpenWindowSticker" disabled="@IsBusy">Window Sticker</button>
+
+                @if (IsBusy)
+                {
+                    <span class="spinner-border spinner-border-sm text-primary ms-2"></span>
+                }
+                else if (!string.IsNullOrEmpty(SaveStatus))
+                {
+                    <span style="margin-left:10px; color:@SaveStatusColor;">@SaveStatus</span>
+                }
             </div>
         </div>
     }
 </div>
-
 @code {
     // State
     private string VinInput { get; set; } = string.Empty;
@@ -127,6 +128,9 @@
     private string OriginalDamage   { get; set; } = string.Empty;
     private string DamageDescription{ get; set; } = string.Empty;
     private string SaveStatus       { get; set; } = string.Empty;
+    private bool IsBusy { get; set; } = false;
+    private readonly Queue<Func<Task>> _actionQueue = new();
+    private bool _isRunningQueue = false;
 
     // Computed
     private bool KeyCodeChanged     => EnteredKeyCode.Trim()  != OriginalKeyCode.Trim();
@@ -135,7 +139,8 @@
     private bool CanSave            => KeyCodeChanged || LocationChanged || DamageChanged;
     private string SaveStatusColor  => SaveStatus.Contains("✓") ? "green" : SaveStatus == "Error" ? "red" : "black";
     private string ContainerColor   => VehicleDetails?.Location == "NA" ? "#d3d3d3" : "#e6f9e6";
-
+    private async Task QueueSaveAsync() => await EnqueueAsync(SaveAsync);
+    private async Task QueueSaveKeyTagAsync() => await EnqueueAsync(SaveKeyTagAsync);
     private CancellationTokenSource _cts = new();
 
     protected override async Task OnInitializedAsync()
@@ -290,12 +295,15 @@
 
     private async Task SaveAsync()
     {
+        IsBusy = true;               // Show spinner
+        SaveStatus = "";             // Hide status until done
+        StateHasChanged();
+
         try
         {
             var vin = VinInput;
             DetachIfTracked(vin);
 
-            // history row
             var entry = new VehiclesScanned
                 {
                     VIN = vin,
@@ -309,7 +317,6 @@
                 };
             DbContext.VehiclesScanned.Add(entry);
 
-            // master update
             var master = new AzVehicles { VehicleID = VehicleDetails.VehicleID };
             DbContext.AzVehicles.Attach(master);
             master.Location = EnteredLocation;
@@ -318,18 +325,18 @@
             DbContext.Entry(master).Property(x => x.KeyCode).IsModified = true;
 
             await DbContext.SaveChangesAsync();
-            SaveStatus = "Saved ✓";
         }
         catch (Exception ex)
         {
             SaveStatus = $"Error: {ex.InnerException?.Message ?? ex.Message}";
         }
 
+        IsBusy = false;             // Hide spinner
+        SaveStatus = "Saved ✓";     // ✅ Now show green check
         StateHasChanged();
-        await Task.Delay(2000);
 
-        await ProcessVinAsync();
-        SaveStatus = string.Empty;
+        await Task.Delay(2000);     // Show message for a moment
+        SaveStatus = "";
         StateHasChanged();
     }
 
@@ -402,6 +409,26 @@
             EnteredLocation = "";
         else
             EnteredLocation = v;
+    }
+    private async Task EnqueueAsync(Func<Task> action)
+    {
+        _actionQueue.Enqueue(action);
+        if (!_isRunningQueue)
+        {
+            _isRunningQueue = true;
+            IsBusy = true;
+            SaveStatus = string.Empty;
+            StateHasChanged();
+
+            while (_actionQueue.TryDequeue(out var next))
+            {
+                try { await next(); } catch (Exception ex) { Console.WriteLine(ex.Message); }
+            }
+
+            IsBusy = false;
+            _isRunningQueue = false;
+            StateHasChanged();
+        }
     }
     private class VehicleInfo
     {

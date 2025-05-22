@@ -5,6 +5,7 @@
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
 @inject CustomAuthStateProvider AuthStateProvider
+@inject HttpClient Http
 
 <style src="LoginPage.razor.css" scoped></style>
 
@@ -86,9 +87,10 @@
         {
             Console.WriteLine($"User authenticated: {result.loginID}"); // ✅ Debug log username
 
-
-
             await AuthStateProvider.SetLoggedInAsync(result); // ✅ Use AuthStateProvider
+            await JS.InvokeVoidAsync("console.log", "[DEBUG] Entered GrantDatabaseAccessAsync()");
+
+            await GrantDatabaseAccessAsync();
 
             Navigation.NavigateTo("/Home");
         }
@@ -98,6 +100,40 @@
             ErrorMessage = "Invalid credentials.";
         }
     }
+    private string firewallStatus = "";
+
+    private async Task GrantDatabaseAccessAsync()
+    {
+        await JS.InvokeVoidAsync("console.log", "[DEBUG] Entered GrantDatabaseAccessAsync()");
+
+        try
+        {
+            var ip = await Http.GetStringAsync("https://api.ipify.org");
+            var url = $"https://firewallsqlfunction.azurewebsites.net/api/AddFirewallRule?code=UGInsL_eeNFdZzWcPER-ajsLHoYPb5WXJRHKPNBSnM5LAzFub5lM4g==&ip={ip}";
+            var response = await Http.PostAsync(url, null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadAsStringAsync();
+                var firewallStatus = $"✅ Firewall rule applied. Response: {result}";
+                await JS.InvokeVoidAsync("console.log", firewallStatus);
+            }
+            else
+            {
+                var error = $"❌ Firewall function failed: {response.StatusCode}";
+                await JS.InvokeVoidAsync("console.log", error);
+            }
+        }
+        catch (Exception ex)
+        {
+            var error = $"❌ Exception while calling firewall function: {ex.Message}";
+            await JS.InvokeVoidAsync("console.log", error);
+        }
+    }
+
+
+
+
 
 
 

@@ -1,10 +1,11 @@
-@page "/reports"
+﻿@page "/reports"
 @inject HttpClient Http
 @inject NavigationManager Navigation
 @namespace AlanJayApp.Pages
 @using System.Globalization
 @using System.Linq
 @using AlanJayApp.Models
+@inject IJSRuntime JS
 
 @if (IsLoading)
 {
@@ -50,6 +51,12 @@ else
                     </tr>
                 </tbody>
             </table>
+            <div class="table-controls">
+                <button @onclick="@(() => AdjustFontSize("delivered", 1.05))">A+</button>
+                <button @onclick="@(() => AdjustFontSize("delivered", 0.95))">A−</button>
+            </div>
+
+
         </section>
 
         <!-- Finance Undelivered Receivables Table -->
@@ -89,6 +96,12 @@ else
                     </tr>
                 </tbody>
             </table>
+            <div class="table-controls">
+                <button @onclick="@(() => AdjustFontSize("delivered", 1.05))">A+</button>
+                <button @onclick="@(() => AdjustFontSize("delivered", 0.95))">A−</button>
+            </div>
+
+
         </section>
 
         <!-- Monthly Report -->
@@ -127,6 +140,8 @@ else
                     </tr>
                 </tbody>
             </table>
+            
+
 
 
 
@@ -160,6 +175,11 @@ else
                     <strong>Total Profit:</strong>
                     <span>@MonthlyTotalProfitFormatted</span>
                 </div>
+                
+            </div>
+            <div class="table-controls">
+                <button @onclick="@(() => AdjustFontSize("delivered", 1.05))">A+</button>
+                <button @onclick="@(() => AdjustFontSize("delivered", 0.95))">A−</button>
             </div>
         </section>
 
@@ -193,6 +213,8 @@ else
                     </tr>
                 </tbody>
             </table>
+            
+
 
             <!-- Yearly Summary Section -->
             <div class="summary-blocks">
@@ -222,6 +244,10 @@ else
                     <strong>Total Profit:</strong>
                     <span>@YearlyTotalProfitFormatted</span>
                 </div>
+            </div>
+            <div class="table-controls">
+                <button @onclick="@(() => AdjustFontSize("delivered", 1.05))">A+</button>
+                <button @onclick="@(() => AdjustFontSize("delivered", 0.95))">A−</button>
             </div>
         </section>
 
@@ -310,5 +336,20 @@ else
             IsLoading = false;
         }
     }
+    private async Task AdjustFontSize(string tableId, double multiplier)
+    {
+        await JS.InvokeVoidAsync("adjustTableFontSize", tableId, multiplier);
+    }
+
     
 }
+<script>
+    window.adjustTableFontSize = (tableId, multiplier) => {
+    const tables = document.querySelectorAll(`table`);
+    tables.forEach(table => {
+        const currentSize = parseFloat(getComputedStyle(table).fontSize);
+        const newSize = currentSize * multiplier;
+        table.style.fontSize = `${newSize}px`;
+    });
+};
+</script>

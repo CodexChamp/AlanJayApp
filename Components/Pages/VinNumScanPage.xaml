@@ -36,13 +36,8 @@
           BackgroundColor="#e8f5e9"
           Spacing="10">
 
-                    <!-- Back -->
-                    <Button
-            x:Name="backButton"
-            Text="Back"
-            BackgroundColor="White"
-            TextColor="#007AFF"
-            Clicked="BackButton_Clicked" />
+                   
+                    
 
                     <!-- Scanner frame -->
                     <Border
@@ -89,7 +84,7 @@
             x:Name="barcodeResult"
             Text="VIN: (none)"
             FontSize="20"
-            TextColor="Black"
+            TextColor="Black" 
             HorizontalOptions="Center" />
 
                     <!-- Capture & thumbnail strip -->
@@ -98,14 +93,18 @@
             Text="Capture Photo"
             Clicked="OnCapturePhotoClicked" />
 
-                    <ScrollView
-            Orientation="Horizontal"
-            HeightRequest="110"
-            Margin="0,10,0,0">
-                        <HorizontalStackLayout
-              x:Name="photosContainer"
-              Spacing="10" />
-                    </ScrollView>
+
+                    <Border
+    StrokeThickness="0"
+    BackgroundColor="#e0e0e0"
+    Padding="5"
+    Margin="0,10,0,0"
+    StrokeShape="RoundRectangle 8">
+                        <ScrollView Orientation="Horizontal" HeightRequest="100">
+                            <HorizontalStackLayout x:Name="photosContainer" Spacing="10" />
+                        </ScrollView>
+                    </Border>
+
 
                     <!-- Upload to Azure -->
                     <Button
@@ -113,6 +112,12 @@
             Text="Upload Photos"
             IsEnabled="False"
             Clicked="OnUploadClicked" />
+                    <Button
+            x:Name="backButton"
+            Text="Back"
+            BackgroundColor="White"
+            TextColor="#007AFF"
+            Clicked="BackButton_Clicked" />
 
                 </VerticalStackLayout>
             </ScrollView>

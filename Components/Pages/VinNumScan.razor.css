@@ -18,6 +18,8 @@
         padding: 1rem;
         box-sizing: border-box;
         width: 100%;
+        min-height: 100vh; /* Ensures full height for scrolling */
+        overflow-y: auto;
         max-width: 75rem;
         border-radius: 0.5rem;
         border-width: 2px;
@@ -205,15 +207,15 @@
 
     /* Action Buttons */
     .action-buttons {
-        display: grid;
-        /* two columns of equal width */
-        grid-template-columns: repeat(2, 1fr);
-        /* small gap between rows and columns */
+        display: flex;
+        flex-wrap: wrap; /* Allow wrapping */
         gap: 0.5rem;
-        /* center it if you like */
-        justify-items: stretch;
+        justify-content: center;
+        width: 100%; /* Take full width of parent */
+        box-sizing: border-box;
         margin-top: 1rem;
     }
+
 
     .action-button {
         flex: 1;
@@ -578,10 +580,14 @@
 /* make the button row tighter */
 .action-buttons {
     display: flex;
-    gap: 0.2rem; /* less space between buttons */
+    flex-wrap: wrap; /* Allow wrapping */
+    gap: 0.5rem;
     justify-content: center;
+    width: 100%; /* Take full width of parent */
+    box-sizing: border-box;
     margin-top: 1rem;
 }
+
 
 /* common styling for both buttons */
 .action-button,
