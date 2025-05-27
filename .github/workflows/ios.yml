@@ -68,12 +68,13 @@ jobs:
      # 5️⃣  Build MAUI .ipa
     - name: Publish .NET MAUI for iOS
       run: |
-          dotnet workload install maui          
+          dotnet workload install maui
           dotnet restore AlanJayApp.csproj
           dotnet publish AlanJayApp.csproj \
-                       -c Release -f net8.0-ios \
-                       -o out /p:BuildIpa=true \
-                       /p:ProvisioningProfile=app.mobileprovision
+               -c Release -f net8.0-ios \
+               -o out /p:BuildIpa=true \
+               /p:CodesignKey="Apple Distribution: rylan champion (YUDP2VB9YY)" \
+               /p:CodesignProvision=app.mobileprovision
 
 
     # 5️⃣.1 🔍 List output directory
