@@ -65,14 +65,15 @@ jobs:
         ruby-version: '3.2'
         bundler-cache: true
 
-    # 5️⃣  Build MAUI .ipa
+     # 5️⃣  Build MAUI .ipa
     - name: Publish .NET MAUI for iOS
       run: |
-          dotnet workload install maui        
-          dotnet restore
-          dotnet publish -c Release -f net8.0-ios \
-                         -o out /p:BuildIpa=true \
-                         /p:ProvisioningProfile=app.mobileprovision
+          dotnet workload install maui          
+          dotnet restore AlanJayApp.csproj
+          dotnet publish AlanJayApp.csproj \
+                       -c Release -f net8.0-ios \
+                       -o out /p:BuildIpa=true \
+                       /p:ProvisioningProfile=app.mobileprovision
 
 
     # 5️⃣.1 🔍 List output directory
