@@ -58,11 +58,15 @@ jobs:
         ruby-version: '3.2'
         bundler-cache: true
 
-    # 4️⃣.9 🔍 Copy the provisioning profile where Xcode expects it
+        # 4️⃣.9 🔍 Copy the provisioning profile where Xcode expects it (with UUID name)
     - name: Install provisioning profile  🔍
+      id: install-profile
       run: |
+        uuid=$( /usr/libexec/PlistBuddy -c 'Print :UUID' app.mobileprovision )
+        echo "UUID=$uuid" >> "$GITHUB_ENV"
         mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-        cp app.mobileprovision "$HOME/Library/MobileDevice/Provisioning Profiles/"
+        cp app.mobileprovision "$HOME/Library/MobileDevice/Provisioning Profiles/$uuid.mobileprovision"
+        echo "Installed profile as $uuid.mobileprovision"
 
     # 5️⃣  Build MAUI .ipa
     - name: Publish .NET MAUI for iOS
@@ -73,7 +77,8 @@ jobs:
              -c Release -f net8.0-ios \
              -o out /p:BuildIpa=true \
              /p:CodesignKey="Apple Distribution: rylan champion (YUDP2VB9YY)" \
-             /p:CodesignKeychain='${{ steps.import-certs.outputs.keychain-path }}'
+             /p:CodesignKeychain='${{ steps.import-certs.outputs.keychain-path }}' \
+             /p:CodesignProvision='${{ env.UUID }}'
 
     - name: List publish output  🔍
       run: ls -l out
