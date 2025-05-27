@@ -2,7 +2,7 @@ name: Build & Upload iOS
 
 on:
   push:
-    branches: [ master ]      # change if needed
+    branches: [ master ]
 
 jobs:
   ios-build:
@@ -58,11 +58,11 @@ jobs:
         ruby-version: '3.2'
         bundler-cache: true
 
-        # 4️⃣.9 🔍 Copy the provisioning profile where Xcode expects it (with UUID name)
+    # 4️⃣.9 🔍 Copy the provisioning profile where Xcode expects it (with UUID name)
     - name: Install provisioning profile  🔍
       id: install-profile
       run: |
-        uuid=$( /usr/libexec/PlistBuddy -c 'Print :UUID' app.mobileprovision )
+        uuid=$( /usr/libexec/PlistBuddy -c 'Print :UUID' /dev/stdin < <( security cms -D -i app.mobileprovision ) )
         echo "UUID=$uuid" >> "$GITHUB_ENV"
         mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
         cp app.mobileprovision "$HOME/Library/MobileDevice/Provisioning Profiles/$uuid.mobileprovision"
