@@ -70,7 +70,7 @@ jobs:
       run: |
           dotnet workload install maui        
           dotnet restore
-          dotnet publish -c Release -f net9.0-ios \
+          dotnet publish -c Release -f net8.0-ios \
                          -o out /p:BuildIpa=true \
                          /p:ProvisioningProfile=app.mobileprovision
 
