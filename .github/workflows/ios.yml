@@ -58,15 +58,23 @@ jobs:
         ruby-version: '3.2'
         bundler-cache: true
 
-    # 4️⃣.9 🔍 Copy the provisioning profile where Xcode expects it (with UUID name)
+        # 4️⃣.9 🔍 Copy the provisioning profile where Xcode expects it (with UUID name)
     - name: Install provisioning profile  🔍
       id: install-profile
       run: |
-        uuid=$( /usr/libexec/PlistBuddy -c 'Print :UUID' /dev/stdin < <( security cms -D -i app.mobileprovision ) )
+        # 1. Decode the CMS wrapper to a plain plist
+        security cms -D -i app.mobileprovision -o profile.plist
+
+        # 2. Extract the UUID value
+        uuid=$(/usr/libexec/PlistBuddy -c 'Print :UUID' profile.plist)
         echo "UUID=$uuid" >> "$GITHUB_ENV"
+
+        # 3. Move the profile to the standard folder with its UUID filename
         mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
         cp app.mobileprovision "$HOME/Library/MobileDevice/Provisioning Profiles/$uuid.mobileprovision"
-        echo "Installed profile as $uuid.mobileprovision"
+
+        echo "Installed provisioning profile as $uuid.mobileprovision"
+
 
     # 5️⃣  Build MAUI .ipa
     - name: Publish .NET MAUI for iOS
