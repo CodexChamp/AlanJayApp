@@ -2,7 +2,7 @@ name: Build & Upload iOS
 
 on:
   push:
-    branches: [ master ]      # change if needed
+    branches: [ master ]
 
 jobs:
   ios-build:
@@ -31,31 +31,24 @@ jobs:
         PROFILE_BASE64: ${{ secrets.PROFILE_BASE64 }}
         ASC_KEY_BASE64: ${{ secrets.ASC_KEY_BASE64 }}
 
-    # 2️⃣.1 🔍 List files & sizes
     - name: List working directory  🔍
       run: ls -l
-
-    # 2️⃣.2 🔍 Show p12 SHA-256
     - name: Check p12 hash  🔍
       run: shasum -a 256 signing.p12
-
-    # 2️⃣.3 🔍 Confirm password opens p12 (non-interactive)
     - name: Sanity-check p12 password  🔍
       run: |
-        set -e
-        echo "Trying to open signing.p12 with supplied password..."
         openssl pkcs12 -in signing.p12 -nokeys \
                        -passin pass:${{ secrets.P12_PASSWORD }} \
                        -clcerts -info >/dev/null
         echo "Password accepted ✔︎"
 
-    # 3️⃣  Import certificate into throw-away keychain
-    - uses: apple-actions/import-codesign-certs@v2
+    # 3️⃣  Import certificate into throw-away keychain  ➜ add an id
+    - id: import-certs
+      uses: apple-actions/import-codesign-certs@v2
       with:
         p12-filepath: signing.p12
         p12-password: ${{ secrets.P12_PASSWORD }}
 
-    # 3️⃣.1 🔍 List certs now in keychain
     - name: List keychain identities  🔍
       run: security find-identity -p codesigning -v
 
@@ -65,19 +58,18 @@ jobs:
         ruby-version: '3.2'
         bundler-cache: true
 
-     # 5️⃣  Build MAUI .ipa
+    # 5️⃣  Build MAUI .ipa  (now passes CodesignKeychain)
     - name: Publish .NET MAUI for iOS
       run: |
-          dotnet workload install maui
-          dotnet restore AlanJayApp.csproj
-          dotnet publish AlanJayApp.csproj \
-               -c Release -f net8.0-ios \
-               -o out /p:BuildIpa=true \
-               /p:CodesignKey="Apple Distribution: rylan champion (YUDP2VB9YY)" \
-               /p:CodesignProvision=app.mobileprovision
+        dotnet workload install maui
+        dotnet restore AlanJayApp.csproj
+        dotnet publish AlanJayApp.csproj \
+             -c Release -f net8.0-ios \
+             -o out /p:BuildIpa=true \
+             /p:CodesignKey="Apple Distribution: rylan champion (YUDP2VB9YY)" \
+             /p:CodesignProvision=app.mobileprovision \
+             /p:CodesignKeychain='${{ steps.import-certs.outputs.keychain-path }}'
 
-
-    # 5️⃣.1 🔍 List output directory
     - name: List publish output  🔍
       run: ls -l out
 
