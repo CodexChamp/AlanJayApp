@@ -2,7 +2,7 @@ name: Build & Upload iOS
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master ]      # change if needed
 
 jobs:
   ios-build:
@@ -42,7 +42,7 @@ jobs:
                        -clcerts -info >/dev/null
         echo "Password accepted ✔︎"
 
-    # 3️⃣  Import certificate into throw-away keychain  ➜ add an id
+    # 3️⃣  Import certificate into throw-away keychain
     - id: import-certs
       uses: apple-actions/import-codesign-certs@v2
       with:
@@ -58,7 +58,13 @@ jobs:
         ruby-version: '3.2'
         bundler-cache: true
 
-    # 5️⃣  Build MAUI .ipa  (now passes CodesignKeychain)
+    # 4️⃣.9 🔍 Copy the provisioning profile where Xcode expects it
+    - name: Install provisioning profile  🔍
+      run: |
+        mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+        cp app.mobileprovision "$HOME/Library/MobileDevice/Provisioning Profiles/"
+
+    # 5️⃣  Build MAUI .ipa
     - name: Publish .NET MAUI for iOS
       run: |
         dotnet workload install maui
@@ -67,7 +73,6 @@ jobs:
              -c Release -f net8.0-ios \
              -o out /p:BuildIpa=true \
              /p:CodesignKey="Apple Distribution: rylan champion (YUDP2VB9YY)" \
-             /p:CodesignProvision=app.mobileprovision \
              /p:CodesignKeychain='${{ steps.import-certs.outputs.keychain-path }}'
 
     - name: List publish output  🔍
