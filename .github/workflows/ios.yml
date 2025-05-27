@@ -67,12 +67,13 @@ jobs:
 
     # 5️⃣  Build MAUI .ipa
     - name: Publish .NET MAUI for iOS
-        run: |
-          dotnet workload install maui          # ← replaces the two specific lines
+      run: |
+          dotnet workload install maui        
           dotnet restore
           dotnet publish -c Release -f net9.0-ios \
                          -o out /p:BuildIpa=true \
                          /p:ProvisioningProfile=app.mobileprovision
+
 
     # 5️⃣.1 🔍 List output directory
     - name: List publish output  🔍
