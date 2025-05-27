@@ -2,50 +2,89 @@ name: Build & Upload iOS
 
 on:
   push:
-    branches: [ master ]           # change if your release branch is different
+    branches: [ master ]      # change if needed
 
 jobs:
   ios-build:
     runs-on: macos-latest
 
     steps:
-      # 1  Check out your code
-      - uses: actions/checkout@v4
+    # 0️⃣  🔍 Show runner image & OpenSSL version
+    - name: Env / tool versions  🔍
+      run: |
+        sw_vers
+        uname -a
+        which openssl && openssl version
+        echo "Shell: $SHELL"
 
-      # 2  Rehydrate signing materials from secrets
-      - name: Restore signing files
-        run: |
-          echo "$P12_BASE64"      | base64 --decode > signing.p12
-          echo "$PROFILE_BASE64"  | base64 --decode > app.mobileprovision
-          echo "$ASC_KEY_BASE64"  | base64 --decode > asc_key.p8
-        env:
-          P12_BASE64:     ${{ secrets.P12_BASE64 }}
-          PROFILE_BASE64: ${{ secrets.PROFILE_BASE64 }}
-          ASC_KEY_BASE64: ${{ secrets.ASC_KEY_BASE64 }}
+    # 1️⃣  Check out code
+    - uses: actions/checkout@v4
 
-      # 2.5 Debug — verify the p12 bytes match what you expect
-      - name: Check p12 hash
-        run: shasum -a 256 signing.p12              # <─ same indent as other - name lines
+    # 2️⃣  Recreate signing artifacts from secrets
+    - name: Restore signing files
+      run: |
+        echo "$P12_BASE64"      | base64 --decode > signing.p12
+        echo "$PROFILE_BASE64"  | base64 --decode > app.mobileprovision
+        echo "$ASC_KEY_BASE64"  | base64 --decode > asc_key.p8
+      env:
+        P12_BASE64:     ${{ secrets.P12_BASE64 }}
+        PROFILE_BASE64: ${{ secrets.PROFILE_BASE64 }}
+        ASC_KEY_BASE64: ${{ secrets.ASC_KEY_BASE64 }}
 
-      # 3  Import the .p12 into a temporary keychain
-      - uses: apple-actions/import-codesign-certs@v2
-        with:
-          p12-filepath: signing.p12
-          p12-password: ${{ secrets.P12_PASSWORD }}
+    # 2️⃣.1 🔍 List files & sizes
+    - name: List working directory  🔍
+      run: ls -l
 
-           # 4  Install Ruby (Fastlane runs on Ruby) and cache gems
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'       # anything 2.7+ works
-          bundler-cache: true
+    # 2️⃣.2 🔍 Show p12 SHA-256
+    - name: Check p12 hash  🔍
+      run: shasum -a 256 signing.p12
 
-      # 5  Upload the IPA to TestFlight / App Store Connect
-      - name: Deliver to App Store Connect
-        uses: maierj/fastlane-action@v3.1.0   # <-- pin to the actual release tag
-        with:
-          lane: deliver
-        env:
-          APP_STORE_CONNECT_API_KEY_KEY:              ${{ secrets.ASC_KEY_ID }}
-          APP_STORE_CONNECT_API_KEY_ISSUER_ID:        ${{ secrets.ASC_ISSUER_ID }}
-          APP_STORE_CONNECT_API_KEY_IS_KEY_CONTENT_BASE64: "true"
-          APP_STORE_CONNECT_API_KEY_CONTENT:          ${{ secrets.ASC_KEY_BASE64 }}
+    # 2️⃣.3 🔍 Confirm password opens p12 (non-interactive)
+    - name: Sanity-check p12 password  🔍
+      run: |
+        set -e
+        echo "Trying to open signing.p12 with supplied password..."
+        openssl pkcs12 -in signing.p12 -nokeys \
+                       -passin pass:${{ secrets.P12_PASSWORD }} \
+                       -clcerts -info >/dev/null
+        echo "Password accepted ✔︎"
+
+    # 3️⃣  Import certificate into throw-away keychain
+    - uses: apple-actions/import-codesign-certs@v2
+      with:
+        p12-filepath: signing.p12
+        p12-password: ${{ secrets.P12_PASSWORD }}
+
+    # 3️⃣.1 🔍 List certs now in keychain
+    - name: List keychain identities  🔍
+      run: security find-identity -p codesigning -v
+
+    # 4️⃣  Install Ruby (Fastlane) and cache gems
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.2'
+        bundler-cache: true
+
+    # 5️⃣  Build MAUI .ipa
+    - name: Publish .NET MAUI for iOS
+      run: |
+        dotnet workload install maui-ios
+        dotnet restore
+        dotnet publish -c Release -f net9.0-ios \
+                       -o out /p:BuildIpa=true \
+                       /p:ProvisioningProfile=app.mobileprovision
+
+    # 5️⃣.1 🔍 List output directory
+    - name: List publish output  🔍
+      run: ls -l out
+
+    # 6️⃣  Upload to TestFlight / ASC
+    - name: Deliver to App Store Connect
+      uses: maierj/fastlane-action@v3.1.0
+      with:
+        lane: deliver
+      env:
+        APP_STORE_CONNECT_API_KEY_KEY:               ${{ secrets.ASC_KEY_ID }}
+        APP_STORE_CONNECT_API_KEY_ISSUER_ID:         ${{ secrets.ASC_ISSUER_ID }}
+        APP_STORE_CONNECT_API_KEY_IS_KEY_CONTENT_BASE64: "true"
+        APP_STORE_CONNECT_API_KEY_CONTENT:           ${{ secrets.ASC_KEY_BASE64 }}
