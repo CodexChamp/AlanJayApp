@@ -23,6 +23,10 @@ jobs:
           PROFILE_BASE64: ${{ secrets.PROFILE_BASE64 }}
           ASC_KEY_BASE64: ${{ secrets.ASC_KEY_BASE64 }}
 
+      # 2.5 Debug — verify the p12 bytes match what you expect
+      - name: Check p12 hash
+        run: shasum -a 256 signing.p12              # <─ same indent as other - name lines
+
       # 3  Import the .p12 into a temporary keychain
       - uses: apple-actions/import-codesign-certs@v2
         with:
