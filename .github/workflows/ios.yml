@@ -2,7 +2,7 @@ name: Build & Upload iOS
 
 on:
   push:
-    branches: [ main ]           # change if your release branch is different
+    branches: [ master ]           # change if your release branch is different
 
 jobs:
   ios-build:
