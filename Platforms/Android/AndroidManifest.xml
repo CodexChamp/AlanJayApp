@@ -10,7 +10,7 @@
 	</queries>
 
 	<application android:label="AlanJayFleet"
-				 android:icon="@mipmap/icon"
+				 android:icon="@mipmap/appicon"
 				 android:allowBackup="true"
 				 android:supportsRtl="true">
 
