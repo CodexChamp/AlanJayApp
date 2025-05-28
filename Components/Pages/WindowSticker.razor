@@ -16,8 +16,12 @@
 
 <div class="container">
 
+    
+
     @if (VehicleDetails != null)
     {
+        <button class="btn btn-secondary" @onclick="GoBack">Back</button>
+
         <div class="vehicle-details">
             @if (!string.IsNullOrWhiteSpace(VinInput))
             {
@@ -30,8 +34,13 @@
             <p><strong>Year:</strong> @VehicleDetails.Vyear</p>
             <p><strong>Make:</strong> @VehicleDetails.Vmake</p>
             <p><strong>Tech:</strong> @TechName </p>
-
         </div>
+    }
+    else
+    {
+        <p>Loading vehicle details...</p>
+    }
+
         
         <table class="table">
             <thead>
@@ -95,23 +104,7 @@
         {
             <button @onclick="SubmitIncompleteSticker" class="btn btn-primary">Submit</button>
         }
-        <!-- Button to trigger recall lookup -->
-        //@if (IsStellantis(VehicleDetails?.Vmake))
-        //{
-            //<button @onclick="CheckRecallsAsync" class="btn btn-info" disabled="@IsRecallLoading" style="margin-left: 1rem;">
-                //@if (IsRecallLoading)
-                //{
-                 //   <span>Loading recall info...</span>
-                //}
-                //else
-               // {
-               //     <span>Check Recalls</span>
-               // }
-            //</button>
-        //}
-
-
-        <!-- Display recall results if not loading -->
+        
         @if (!IsRecallLoading && !string.IsNullOrWhiteSpace(RecallResultOutput))
         {
             <div class="recall-results">
@@ -124,7 +117,7 @@
                 <h3>QC Checklist</h3>
                 @if (QCItems == null || !QCItems.Any())
                 {
-                    <p>No QC Items Found</p>  <!-- ✅ Debugging Text -->
+                    <p>No QC Items Found</p> 
                 }
                 else
                 {
@@ -139,20 +132,16 @@
                 <button @onclick="CancelQC" class="btn btn-danger">Cancel</button>
             </div>
         </div>
-    }
-    else
+    
+    @if (VehicleDetails == null)
     {
-        @if (VehicleDetails == null)
-        {
-            <!-- The data is still loading -->
-            <p>Loading...</p>
-        }
-        else if (!QCItems?.Any() ?? true)
-        {
-            <!-- We finished loading, but no items are available -->
-            <p>No Info Found</p>
-        }
+        <p>Loading...</p>
     }
+    else if (!QCItems?.Any() ?? true)
+    {
+        <p>No Info Found</p>
+    }
+
 </div>
 <script>
     function limitText(field, maxLength) {
@@ -218,6 +207,11 @@
 
         TechName = techName ?? "Unknown";
     }
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/vinnumscan");
+    }
+
     private async Task CheckRecallsAsync()
     {
         // Show "Loading..." and clear previous results

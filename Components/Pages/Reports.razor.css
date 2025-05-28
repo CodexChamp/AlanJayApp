@@ -1,6 +1,4 @@
-﻿
-
-/* Apply Light Mode */
+﻿/* Apply Light Mode */
 html, body {
     background-color: var(--bg-light);
     color: var(--text-light);
@@ -27,6 +25,37 @@ html, body {
     font-size: var(--font-large);
 }
 
+/* Responsive shrink if overflow logic */
+@keyframes shrinkTableIfOverflow {
+    0% {
+        font-size: 100%;
+    }
+
+    20% {
+        font-size: 95%;
+    }
+
+    40% {
+        font-size: 90%;
+    }
+
+    60% {
+        font-size: 85%;
+    }
+
+    80% {
+        font-size: 80%;
+    }
+
+    100% {
+        font-size: 75%;
+    }
+}
+
+/* Will be dynamically applied via JS when overflow is detected */
+.shrink-text {
+    animation: shrinkTableIfOverflow 1s forwards;
+}
 
 /* Default table styling */
 table {
@@ -34,74 +63,47 @@ table {
     border-collapse: collapse;
     table-layout: auto;
     font-size: 1rem;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    background-color: white;
 }
 
-thead th {
-    background-color: #d3e3f0; /* Muted blue */
-    text-align: right;
+th, td {
     padding: 0.75rem;
+    border: none;
+    text-align: right;
+}
+
+    th:first-child, td:first-child {
+        text-align: left;
+    }
+
+thead th {
+    background-color: #d3e3f0;
     border-bottom: 2px solid #ccc;
 }
 
 tbody tr:nth-child(even) {
-    background-color: #e3f2f9; /* Light row color */
+    background-color: #e3f2f9;
 }
 
 tbody tr:nth-child(odd) {
     background-color: #ffffff;
 }
 
-th:first-child {
-    text-align: left;
-}
-
-tfoot td {
-    text-align: right;
-    padding: 0.75rem;
-    border-top: 2px solid #ccc;
-}
-
-    /* Align the "Totals:" label to the left */
-    tfoot td:first-child {
-        text-align: left; /* Left-align the first column (Totals: label) */
-    }
-
-/* Alignment for summary block items */
-.summary-blocks div {
-    display: flex;
-    justify-content: space-between; /* Align text and numbers to opposite ends */
-    margin-bottom: 0.5rem;
-}
-
-    .summary-blocks div:nth-child(2) span {
-        border-bottom: 2px solid black; /* Dark line at bottom of the block */
-    }
-
-/* Table column adjustments */
-table {
-    border-collapse: collapse; /* Remove visible column lines */
-    font-size: 1rem;
-}
-
-th, td {
-    border: none; /* Remove column borders */
-}
-
-    th:first-child, td:first-child {
-        text-align: left; /* Align company names to the left */
-    }
-
-tbody td {
-    text-align: right; /* Align numbers to the right */
-}
-
 tbody tr:last-child {
-    border-top: 2px solid #ccc; /* Add a distinct line at the bottom of the table */
+    border-top: 2px solid #ccc;
     background-color: #e8f5e9;
 }
 
+tfoot td {
+    border-top: 2px solid #ccc;
+}
 
-/* Conditional formatting for numbers */
+    tfoot td:first-child {
+        text-align: left;
+    }
+
 .positive {
     color: black;
 }
@@ -109,159 +111,44 @@ tbody tr:last-child {
 .negative {
     color: red;
 }
-/* Container for the table */
+
+.summary-blocks div {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+    .summary-blocks div:nth-child(2) span {
+        border-bottom: 2px solid black;
+    }
+
+/* Font size controls */
+.table-controls {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+    .table-controls button {
+        padding: 0.25rem 0.75rem;
+        font-size: 0.9rem;
+        background-color: deepskyblue;
+        border: 1px solid #aaa;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+        .table-controls button:hover {
+            background-color: #ccc;
+        }
+
 .data-table-container {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
     align-content: center;
-    background-color: var(--bg-color) !important; /* Light Mode Background */
-    padding: 1rem;
-    box-sizing: border-box;
-    overflow-x: auto; /* Horizontal scrolling for small screens */
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-}
-
-section {
-    scroll-snap-align: start;
-    margin-bottom: 1rem;
-    border: 1px solid black;
-    border-radius: .5rem;
-    padding: 1rem;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-}
-
-/* Styles for portrait mode (small screens) */
-@media (orientation: portrait) {
-    .data-table-container {
-        display: grid;
-        grid-template-columns: repeat(4, 100%);
-        overflow-x: auto; /* Allow horizontal scrolling if necessary */
-        overflow-y: hidden;
-        scroll-snap-type: x mandatory;
-        scroll-padding: 0rem 1rem 0rem 1rem;
-        -webkit-overflow-scrolling: touch;
-        padding: 1rem;
-        box-sizing: content-box; /* Ensure padding doesn't affect width calculations */
-    }
-
-    table {
-        width: 100%; /* Make the table take up the container's width */
-        max-width: 100%; /* Prevent the table from overflowing */
-        table-layout: auto; /* Forces the table to fit within the container */
-        border-collapse: collapse; /* Remove gaps between cells */
-    }
-
-    thead th {
-        max-width: 150px; /* Adjust this value as needed */
-    }
-
-    thead th, tbody td {
-        font-size: 0.9rem; /* Adjust font size for smaller devices */
-        padding: 0.5rem; /* Adjust padding for smaller screens */
-
-        overflow: hidden; /* Hide overflowing content */
-    }
-
-    /* Adjust rows and cells for small screens */
-    tbody tr {
-        display: table-row; /* Ensure rows remain table rows */
-    }
-
-    tbody td {
-        word-wrap: break-word; /* Break text if necessary */
-    }
-    /* Tooltip container for the last column */
-    table td:last-child {
-        position: relative; /* Enable relative positioning for tooltips */
-        cursor: pointer; /* Show that it's interactive */
-    }
-
-        /* Tooltip text */
-        table td:last-child::after {
-            content: attr(data-tooltip); /* Use the 'data-tooltip' attribute for the number */
-            visibility: hidden;
-            width: auto;
-            background-color: #555;
-            color: #fff;
-            text-align: center;
-            border-radius: 5px;
-            padding: 0.5rem;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%; /* Position above the cell */
-            left: 50%;
-            transform: translateX(-50%);
-            white-space: nowrap; /* Prevent text wrapping */
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        /* Show tooltip on hover */
-        table td:last-child:hover::after {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        /* Tooltip arrow */
-        table td:last-child::before {
-            content: "";
-            position: absolute;
-            bottom: 115%; /* Arrow below tooltip */
-            left: 50%;
-            transform: translateX(-50%);
-            border-width: 5px;
-            border-style: solid;
-            border-color: transparent transparent #555 transparent;
-            visibility: hidden;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        table td:last-child:hover::before {
-            visibility: visible;
-            opacity: 1;
-        }
-}
-/* Popup styling */
-.popup {
-    position: absolute;
-    display: none; /* Hidden by default */
-    background-color: #fefefe;
-    padding: 10px 15px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    font-size: 14px;
-    color: #333;
-    max-width: 200px;
-    word-wrap: break-word; /* Wrap content if it's too long */
-}
-
-section.hidden {
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(20px);
-    transition: opacity 0.9s ease, transform 0.9s ease;
-}
-
-section.visible {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0);
-}
-
-
-
-
-/* Table Container */
-.data-table-container {
-    display: grid;
-    grid-template-columns: repeat(4, 100%);
-    align-content: center;
-    background-color: var(--bg-color) !important; /* Light Mode Background */
+    background-color: var(--bg-color) !important;
     padding: 1rem;
     box-sizing: border-box;
     overflow-x: auto;
@@ -269,65 +156,44 @@ section.visible {
     -webkit-overflow-scrolling: touch;
 }
 
-/* Section Fix */
 section {
     scroll-snap-align: start;
     margin-bottom: 1rem;
     border: 1px solid black;
     border-radius: .5rem;
     padding: 1rem;
-    background-color: var(--bg-color) !important; /* Light Mode Fix */
+    background-color: var(--bg-color) !important;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
-
-/* ========================== */
-/* 🔥 FIXED PORTRAIT MODE 🔥 */
-/* ========================== */
-
-    .data-table-container,
-    .high-contrast-mode .data-table-container {
-        background-color: var(--bg-color) !important;
-    }
-
-    .high-contrast-mode table {
-        background-color: black !important;
-        color: yellow !important;
-    }
-
-    .high-contrast-mode thead th {
-        background-color: yellow !important; /* ✅ Now Yellow */
-        color: black !important;
-    }
-
-    .high-contrast-mode tbody tr:nth-child(even) {
-        background-color: var(--table-row-dark) !important;
-    }
-
-    .high-contrast-mode tbody tr:nth-child(odd) {
-        background-color: var(--table-row-light) !important;
-    }
-
-
-@media (orientation: landscape) and (max-width: 60rem) {
+/* Ensure table doesn't overflow in portrait mode */
+@media (orientation: portrait) {
     .data-table-container {
         display: grid;
-        grid-template-columns: repeat(4, 100%); /* 4 horizontal 'rows' (columns) */
-        grid-auto-flow: column; /* Ensure items flow left-to-right */
-        overflow-x: auto; /* Allow horizontal scrolling */
-        scroll-snap-type: x mandatory; /* Enable smooth snapping between columns */
-        -webkit-overflow-scrolling: touch; /* Smooth scrolling for touch devices */
-        padding: 1rem; /* Add padding inside the container */
-        box-sizing: border-box; /* Ensure padding is included in the size */
-        gap: 1rem; /* Optional: Adds spacing between columns */
+        grid-template-columns: repeat(4, 100%);
+        grid-auto-flow: column;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        padding: 1rem;
+        box-sizing: border-box;
+        gap: 1rem;
+    }
+    table {
+        width: 100%;
+        max-width: 100%;
+        font-size: 0.95rem;
+    }
+
+    .Unnamed-table {
+        overflow-x: auto;
     }
 }
 
-/* Desktop-specific styling for large screens */
-@media (min-width: 60rem) {
+@media (orientation: landscape) {
     .data-table-container {
         display: block;
-        overflow-y: auto; /* Vertical scrolling for computers */
+        overflow-y: auto;
         overflow-x: hidden;
         background-color: #e8f5e9;
     }
@@ -339,8 +205,7 @@ section {
     }
 
     body {
-        font-size: calc(0.5rem * 2vh); /* Adjust font size for desktop */
-        /* High Contrast Mode */
+        font-size: calc(0.5rem * 2vh);
     }
 
     .high-contrast-mode {
@@ -399,10 +264,7 @@ section {
                 color: var(--bg-color) !important;
             }
 
-    /* Ensure mobile portrait mode maintains consistent colors */
-    @media (orientation: portrait) {
         .high-contrast-mode .data-table-container {
             background-color: var(--bg-color) !important;
         }
-    }
 }

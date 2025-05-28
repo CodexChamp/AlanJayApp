@@ -150,8 +150,7 @@
                             location = car.Location,
                             note = car.Note,
                             KeyCode = car.KeyCode,
-                            KeyType = 1
-                        };
+                        }; 
 
                     DbContext.VehiclesScanned.Add(newCar);
                     Console.WriteLine($"✔ Added car to database: {car.VIN}");
