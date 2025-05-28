@@ -4,7 +4,7 @@
   },
   "workload": {
     "manifestVersions": {
-      "ios": "17.4.0"        //  ← any 17.x tag here is fine
+      "ios": "17.4.0"       
     }
   }
 }
