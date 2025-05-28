@@ -55,7 +55,12 @@
 
     <ItemGroup>
          <!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\icon.png" />
+		<MauiIcon Include="Resources\AppIcon\appicon.png"
+            BaseSize="512,512" />
+
+		<!-- Android mip-map icon (name = appicon) -->
+		<MauiAppIcon Include="Resources\AppIcon\appicon.png"
+					 AppIconName="appicon" />
         <!-- Splash Screen -->
         <MauiSplashScreen Include="wwwroot\Images\loading_screen.png" Color="fefeff" />
 
@@ -85,7 +90,6 @@
     </ItemGroup>
 
     <ItemGroup>
-	  <MauiAppIcon Include="Resources\AppIcon\fav512f.png" />
       <MauiImage Include="Resources\Raw\alanjay.png">
         <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
