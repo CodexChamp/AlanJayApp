@@ -98,7 +98,7 @@ jobs:
       # ─────────────────────────────────────────────────────────────────────────
       - name: Restore net8.0-ios assets
         run: |
-          dotnet msbuild ./AlanJayApp/AlanJayApp.csproj \
+          dotnet msbuild ./AlanJayApp.csproj \
             /t:Restore \
             /p:TargetFramework=net8.0-ios \
             /p:RuntimeIdentifier=ios-arm64
@@ -110,7 +110,7 @@ jobs:
       # ─────────────────────────────────────────────────────────────────────────
       - name: Publish .NET MAUI for iOS → .ipa
         run: |
-          dotnet publish ./AlanJayApp/AlanJayApp.csproj \
+          dotnet publish ./AlanJayApp.csproj \
             -c Release \
             -f net8.0-ios \
             -r ios-arm64 \
