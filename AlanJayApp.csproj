@@ -13,15 +13,15 @@
 	<!-- ──────────────────────────────────────────────────────────────────── -->
 	<ItemGroup>
 		<!-- All your .cs files -->
-		<Compile       Include="**\*.cs" />
+		<Compile Include="**\*.cs" />
 
 		<!-- All your .razor components -->
 		<RazorComponent Include="**\*.razor" />
 
 		<!-- MAUI assets / fonts / icons from Resources\ -->
 		<MauiAsset Include="Resources\**\*" />
-		<MauiFont  Include="Resources\Fonts\**\*" />
-		<MauiIcon  Include="Resources\Images\**\*" />
+		<MauiFont Include="Resources\Fonts\**\*" />
+		<MauiIcon Include="Resources\Images\**\*" />
 	</ItemGroup>
     <PropertyGroup>
         <TargetFrameworks>net8.0-android;net8.0-ios;net8.0-maccatalyst</TargetFrameworks>
@@ -78,12 +78,9 @@
 
     <ItemGroup>
 		<!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\appicon.png"
-            BaseSize="512,512" />
 
 		<!-- Android mip-map icon (name = appicon) -->
-		<MauiAppIcon Include="Resources\AppIcon\appicon.png"
-					 AppIconName="appicon" />
+		<MauiAppIcon Include="Resources\AppIcon\appicon.png" AppIconName="appicon" />
         <!-- Splash Screen -->
         <MauiSplashScreen Include="wwwroot\Images\loading_screen.png" Color="fefeff" />
 
