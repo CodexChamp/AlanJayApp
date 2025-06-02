@@ -1,130 +1,178 @@
-name: Build & Upload iOS
+# File: .github/workflows/ios‐maui‐build.yml
+name: Build & Distribute iOS
 
+# Trigger on pushes to master
 on:
   push:
     branches:
       - master
 
 jobs:
-  ios-build:
-    runs-on: macos-15
+  ios‐build:
+    runs-on: macos-15          # Use macOS 15 (Xcode 16 / iOS 18 SDK)
 
     env:
-      # These three secrets come from Settings → Secrets → Actions
-      P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
-      ASC_KEY_ID:   ${{ secrets.ASC_KEY_ID }}
-      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      # The code‐sign identity exactly as it appears in your .p12
+      CODESIGN_IDENTITY: "Apple Distribution: rylan champion (YUDP2VB9YY)"
+
+      # Pin the MAUI iOS workload version (must match your global.json)
+      MAUI_IOS_WORKLOAD: "17.4.0"
+
+      # We will publish in Release mode
+      BUILD_CONFIGURATION: "Release"
 
     steps:
-      # ─────────────────────────────────────────────────────────────────────────────
-      # 1️⃣  Cache NuGet packages
-      # ─────────────────────────────────────────────────────────────────────────────
+      ############################################################################
+      # 0️⃣  Show runner OS & tool versions (optional but useful for debugging) 
+      ############################################################################
+      - name: Env / Tool Versions 🔍
+        run: |
+          echo "== macOS Version =="
+          sw_vers
+          echo ""
+          echo "== Kernel Info =="
+          uname -a
+          echo ""
+          echo "== OpenSSL =="
+          which openssl && openssl version
+          echo ""
+          echo "== Dotnet (pre‐install) =="
+          dotnet --version || echo "not installed yet" 
+
+      ##########################################################################
+      # 1️⃣  Check out your code
+      ##########################################################################
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      ##########################################################################
+      # 2️⃣  Cache your NuGet packages folder
+      ##########################################################################
       - name: Cache NuGet packages
         uses: actions/cache@v3
         with:
+          # This path covers all downloaded NuGet packages
           path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}-${{ hashFiles('**/Directory.Packages.props') }}
+          # “hashFiles” ensures the cache key changes if any .csproj changes
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
 
-      # ─────────────────────────────────────────────────────────────────────────────
-      # 2️⃣  Cache .NET workloads & SDK packs (to speed up `dotnet workload restore`)
-      # ─────────────────────────────────────────────────────────────────────────────
-      - name: Cache .NET workloads
+      ##########################################################################
+      # 3️⃣  Cache your .NET workload packs under ~/.dotnet
+      ##########################################################################
+      - name: Cache .NET workload packs
         uses: actions/cache@v3
-        id: dotnet-workload-cache
         with:
-          path: |
-            ~/.dotnet
-            ~/.nuget/work
-          key: ${{ runner.os }}-dotnet-workloads-${{ hashFiles('global.json') }}
+          # Caches everything under ~/.dotnet (SDK + workload packs)
+          path: ~/.dotnet
+          # Bump “8.0.301” if you ever update your global.json to a newer SDK
+          key: dotnet-workloads-${{ runner.os }}-8.0.301
 
-      # ─────────────────────────────────────────────────────────────────────────────
-      # 3️⃣  Check out repository
-      # ─────────────────────────────────────────────────────────────────────────────
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # ─────────────────────────────────────────────────────────────────────────────
-      # 4️⃣  Install .NET SDK pinned in global.json
-      # ─────────────────────────────────────────────────────────────────────────────
-      - name: Use .NET SDK 8.0.301
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: 8.0.301
-
-      # ─────────────────────────────────────────────────────────────────────────────
-      # 5️⃣  Sanity‐check versions (optional but helpful)
-      # ─────────────────────────────────────────────────────────────────────────────
-      - name: Env / tool versions 🔍
-        run: |
-          dotnet --info
-          sw_vers
-          xcodebuild -version | head -1
-
-      # ─────────────────────────────────────────────────────────────────────────────
-      # 6️⃣  Recreate signing artifacts from secrets
-      # ─────────────────────────────────────────────────────────────────────────────
+      ############################################################################
+      # 4️⃣  Restore signing files (P12 + .mobileprovision + ASC key) from secrets
+      #     We assume you have created these three secrets in GitHub:
+      #       • P12_BASE64       (contents of your .p12, base64‐encoded)
+      #       • PROFILE_BASE64   (contents of your .mobileprovision, base64‐encoded)
+      #       • ASC_KEY_BASE64   (contents of your AppStore Connect .p8, base64‐encoded)
+      #     You also need these three “unencoded” secrets to exist:
+      #       • P12_PASSWORD     (the password for your P12)
+      #       • ASC_KEY_ID       (your AppStore Connect Key ID)
+      #       • ASC_ISSUER_ID    (your AppStore Connect Issuer ID)
+      ############################################################################
       - name: Restore signing files
         run: |
-          echo "${{ secrets.P12_BASE64 }}"     | base64 --decode > signing.p12
-          echo "${{ secrets.PROFILE_BASE64 }}" | base64 --decode > app.mobileprovision
-          echo "${{ secrets.ASC_KEY_BASE64 }}" | base64 --decode > asc_key.p8
+          # Decode and write out the three artifacts
+          echo "$P12_BASE64" | base64 --decode > signing.p12
+          echo "$PROFILE_BASE64" | base64 --decode > app.mobileprovision
+          echo "$ASC_KEY_BASE64" | base64 --decode > asc_key.p8
 
-      - name: List working directory 🔍
-        run: ls -l
+          ls -l signing.p12 app.mobileprovision asc_key.p8
+        env:
+          P12_BASE64:     ${{ secrets.P12_BASE64 }}
+          PROFILE_BASE64: ${{ secrets.PROFILE_BASE64 }}
+          ASC_KEY_BASE64: ${{ secrets.ASC_KEY_BASE64 }}
 
-      - name: Check p12 hash 🔍
+      ─────────────────────────────────────────────────────────────────────────────────────────
+      # 5️⃣  Quick sanity checks on your .p12 OK-passwd
+      ─────────────────────────────────────────────────────────────────────────────────────────
+      - name: Check P12 Hash 🔍
         run: shasum -a 256 signing.p12
 
-      - name: Sanity-check p12 password 🔍
+      - name: Sanity‐check P12 password 🔍
         run: |
           openssl pkcs12 -in signing.p12 -nokeys \
-                         -passin pass:${{ env.P12_PASSWORD }} \
+                         -passin pass:${{ secrets.P12_PASSWORD }} \
                          -clcerts -info >/dev/null
-          echo "Password accepted ✔︎"
+          echo "✅ P12 password is correct"
+        env:
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
 
-      # ─────────────────────────────────────────────────────────────────────────────
-      # 7️⃣  Import certificate into a temporary keychain
-      # ─────────────────────────────────────────────────────────────────────────────
-      - id: import-certs
-        name: Install code signing certificate
+      ############################################################################
+      # 6️⃣  Import certificate into a temporary keychain (“import-certs” step)
+      #     This lets “CodesignKey” be found by msbuild later.
+      ############################################################################
+      - name: Import Signing Certificate 🔑
         uses: apple-actions/import-codesign-certs@v2
+        id: import-certs
         with:
           p12-filepath: signing.p12
-          p12-password: ${{ env.P12_PASSWORD }}
+          p12-password: ${{ secrets.P12_PASSWORD }}
 
-      - name: List keychain identities 🔍
+      - name: List CodeSigning Identities 🔍
         run: security find-identity -p codesigning -v
 
-      # ─────────────────────────────────────────────────────────────────────────────
-      # 8️⃣  Install provisioning profile where Xcode expects it
-      # ─────────────────────────────────────────────────────────────────────────────
-      - name: Install provisioning profile 🔍
+      ############################################################################
+      # 7️⃣  Set up Ruby + Bundler for Fastlane (we’ll need this later)
+      ############################################################################
+      - name: Setup Ruby & Bundler
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      ############################################################################
+      # 8️⃣  Install the provisioning profile so Xcode can see it
+      #     We decode, extract the UUID, copy into ~/Library/MobileDevice/….
+      ############################################################################
+      - name: Install Provisioning Profile 🔏
         id: install-profile
         run: |
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          # Decode CMS‐wrapped .mobileprovision into a plist
+          # Decode the CMS wrapper → plist
           security cms -D -i app.mobileprovision -o profile.plist
+
+          # Grab its UUID
           uuid=$(/usr/libexec/PlistBuddy -c 'Print :UUID' profile.plist)
+          echo "UUID=$uuid"       >> "$GITHUB_ENV"
+
+          # Make sure the provisioning‐profiles folder exists
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+
+          # Copy under the exact UUID filename
           cp app.mobileprovision \
-             ~/Library/MobileDevice/Provisioning\ Profiles/$uuid.mobileprovision
-          echo "UUID=$uuid" >> "$GITHUB_ENV"
+             "$HOME/Library/MobileDevice/Provisioning Profiles/$uuid.mobileprovision"
+
           echo "Installed provisioning profile as $uuid.mobileprovision"
+        env:
+          # No extra vars needed here; we already have app.mobileprovision on disk.
 
-      # ─────────────────────────────────────────────────────────────────────────────
-      # 9️⃣  Restore all workloads (will use cache if available)
-      # ─────────────────────────────────────────────────────────────────────────────
-      - name: Restore .NET workloads
-        run: dotnet workload restore
+      ############################################################################
+      # 9️⃣  Install the exact .NET SDK (from global.json) so that
+      #     subsequent dotnet commands use 8.0.301.
+      ############################################################################
+      - name: Setup .NET SDK 8.0.301
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.301'
 
-      # ─────────────────────────────────────────────────────────────────────────────
-      # 1️⃣0️⃣  Pin & install exact maui-ios workload (17.4.0)
-      # ─────────────────────────────────────────────────────────────────────────────
-      - name: Pin & install maui-ios@17.4.0
-        run: dotnet workload install maui-ios --version 17.4.0
+      ############################################################################
+      # 🔟  Pin & install maui-iOS@17.4.0
+      #     (because you’re targeting iOS 18 with .NET 8)
+      ############################################################################
+      - name: Pin & Install MAUI iOS workload @17.4.0
+        run: dotnet workload install maui-ios --version $MAUI_IOS_WORKLOAD
 
-      # ─────────────────────────────────────────────────────────────────────────────
-      # 1️⃣1️⃣  Restore only iOS bits (skip Android entirely)
-      # ─────────────────────────────────────────────────────────────────────────────
+      ############################################################################
+      # 1️⃣1️⃣  Restore only the iOS assets (skips Android entirely)
+      ############################################################################
       - name: Restore iOS assets only
         run: |
           dotnet msbuild ./AlanJayApp.csproj \
@@ -132,47 +180,44 @@ jobs:
             /p:TargetFramework=net8.0-ios \
             /p:RuntimeIdentifier=ios-arm64
 
-      # ─────────────────────────────────────────────────────────────────────────────
-      # 1️⃣2️⃣  Publish your .ipa (signed + trimmed)
-      # ─────────────────────────────────────────────────────────────────────────────
+      ############################################################################
+      # 1️⃣2️⃣  Publish a fully‐signed, trimmed .ipa
+      #       • MUST have /p:PublishTrimmed=true on iOS 18+.
+      #       • We point to the keychain path from import-certs@v2.
+      ############################################################################
       - name: Publish .NET MAUI for iOS 🚀
         run: |
           dotnet publish ./AlanJayApp.csproj \
-            -c Release \
+            -c $BUILD_CONFIGURATION \
             -f net8.0-ios \
             -r ios-arm64 \
             -o out \
             --no-restore \
             /p:BuildIpa=true \
-            /p:CodesignKey="Apple Distribution: rylan champion (YUDP2VB9YY)" \
+            /p:CodesignKey="$CODESIGN_IDENTITY" \
             /p:CodesignKeychain="${{ steps.import-certs.outputs.keychain-path }}" \
             /p:CodesignProvision="${{ env.UUID }}" \
             /p:PublishTrimmed=true \
             /p:MtouchLink=SdkOnly
-
-      - name: List publish output 🔍
-        run: ls -l out
-
-      # ─────────────────────────────────────────────────────────────────────────────
-      # 1️⃣3️⃣  Set up Bundler & install Fastlane locally
-      # ─────────────────────────────────────────────────────────────────────────────
-      - name: Setup Bundler & Fastlane
-        run: |
-          gem install bundler
-          bundle init
-          echo 'gem "fastlane"' >> Gemfile
-          bundle config set path vendor/bundle
-          bundle install
-
-      # ─────────────────────────────────────────────────────────────────────────────
-      # 1️⃣4️⃣  Deliver .ipa to TestFlight via Fastlane
-      # ─────────────────────────────────────────────────────────────────────────────
-      - name: Deliver to App Store Connect
-        run: |
-          bundle exec fastlane deliver \
-            --ipa out/AlanJayApp.ipa \
-            --api_key_path asc_key.p8 \
-            --issuer_id ${{ env.ASC_ISSUER_ID }} \
-            --key_id ${{ env.ASC_KEY_ID }}
         env:
-          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+          CODESIGN_IDENTITY: ${{ env.CODESIGN_IDENTITY }}
+
+      - name: List .ipa Output 🔍
+        run: |
+          echo "---- Published .ipa → out/ ----"
+          ls -l out
+
+      ############################################################################
+      # 1️⃣3️⃣  Upload to TestFlight / App Store Connect via Fastlane
+      #       We’ll pass in your ASC Key ID + Issuer ID + base64 content
+      ############################################################################
+      - name: Deliver to App Store Connect ✈️
+        uses: maierj/fastlane-action@v3
+        with:
+          lane: deliver
+        env:
+          # Supply your AppStore Connect Key ID + Issuer ID + base64‐encoded .p8
+          APP_STORE_CONNECT_API_KEY_KEY_ID:       ${{ secrets.ASC_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_ISSUER_ID:    ${{ secrets.ASC_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_IS_KEY_CONTENT_BASE64: "true"
+          APP_STORE_CONNECT_API_KEY_CONTENT:      ${{ secrets.ASC_KEY_BASE64 }}
