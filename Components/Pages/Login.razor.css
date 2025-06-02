@@ -2,10 +2,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    background-color: beige; /* Light background color */
+    background-color: beige;
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    max-height: 100vh; /* Prevents content from spilling beyond screen */
+    overflow-y: auto; /* Allows scrolling */
+    box-sizing: border-box;
 }
 
 .logo-container {

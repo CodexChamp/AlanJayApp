@@ -1,68 +1,86 @@
-﻿using System.Diagnostics; // For Debug.WriteLine
-using Camera.MAUI;
-using Camera.MAUI.ZXing;
-using Camera.MAUI.ZXingHelper;
-using Microsoft.AspNetCore.Components.WebView.Maui;
-using Microsoft.Maui.Dispatching; // For MainThread
-using System;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using AlanJayApp.Services;
-using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Maui.Controls.Shapes; // For Path, PathGeometry, etc.
-using Microsoft.Maui.Graphics;
-using SkiaSharp;
-using SkiaSharp.Views.Maui;
+using MailKit.Net.Smtp;
+using MimeKit;
+using MailKit.Security;
+using Camera.MAUI;
+using Camera.MAUI.ZXingHelper;
+using Microsoft.Maui.Controls;
+using Microsoft.Maui.Media;                          // MediaPicker
+using Microsoft.Maui.Storage;                        // FileSystem
+using Microsoft.Maui.ApplicationModel.Communication; // Email APIs
+using Microsoft.Maui.Dispatching;                    // MainThread
+using Microsoft.Maui.Graphics;                       // Brush, Color, PathGeometry, etc.
 using SkiaSharp.Views.Maui.Controls;
-
+using Microsoft.AspNetCore.Components.WebView.Maui;
+using AlanJayApp.Services;
+using Camera.MAUI.ZXing;
+using Microsoft.Maui.Controls.Shapes;
+using Azure.Storage.Blobs.Models;
+using Azure.Storage.Blobs;
+using Path = System.IO.Path;
 namespace AlanJayApp.Components.Pages
 {
     public partial class VinNumScanPage : ContentPage
     {
-        // Track if the camera is playing
+        readonly string _initialVin;
+        readonly BlobServiceClient _blobClient;// whatever came from the previous page
+        string _currentVin;            // the one we show & upload        // ← the VIN passed in
         bool playing = false;
-        // Holds the currently blurred bitmap image for drawing
+        readonly List<string> photoPaths = new();
 
         public VinNumScanPage()
+            : this(ServiceHelper.GetService<BlobServiceClient>(), null)
+        { }
+        public VinNumScanPage(BlobServiceClient blobClient, string initialVin)
         {
             InitializeComponent();
+            _initialVin = initialVin;
+            _currentVin = initialVin;
+            _blobClient = blobClient ?? throw new ArgumentNullException(nameof(blobClient));
+            if (!string.IsNullOrWhiteSpace(_currentVin))
+                barcodeResult.Text = $"VIN: {_currentVin}";
 
-            // Subscribe to camera events
+            // Scanner events
             cameraView.CamerasLoaded += CameraView_CamerasLoaded;
             cameraView.BarcodeDetected += CameraView_BarcodeDetected;
 
-            // Set up barcode detection options
+            // ZXing options
             cameraView.BarCodeDecoder = new ZXingBarcodeDecoder();
             cameraView.BarCodeOptions = new BarcodeDecodeOptions
             {
                 AutoRotate = true,
-                PossibleFormats = {
+                TryHarder = true,
+                TryInverted = true,
+                ReadMultipleCodes = false,
+                PossibleFormats = new List<Camera.MAUI.BarcodeFormat>
+                {
                     Camera.MAUI.BarcodeFormat.CODE_128,
                     Camera.MAUI.BarcodeFormat.CODE_93,
                     Camera.MAUI.BarcodeFormat.CODE_39,
                     Camera.MAUI.BarcodeFormat.QR_CODE
-                },
-                ReadMultipleCodes = false,
-                TryHarder = true,
-                TryInverted = true
+                }
             };
 
-            // Initialize the custom toggle control with a green triangle.
+            // Shape toggle and initial states
             SetTriangleGeometry();
-            toggleShape.Fill = Brush.Green;
+            controlButton.IsEnabled = false;
+            uploadButton.IsEnabled = false;
         }
 
-        // Called when the cameras have been loaded. Enables the control button after a short delay.
+        // Once cameras list is ready, enable the toggle
         private async void CameraView_CamerasLoaded(object? sender, EventArgs e)
         {
-            await Task.Delay(1000);
-            if (cameraView.NumCamerasDetected > 0)
-            {
-                controlButton.IsEnabled = true;
-            }
+            await Task.Delay(500);
+            controlButton.IsEnabled = cameraView.NumCamerasDetected > 0;
         }
 
-        // Toggles the camera on and off, and updates the toggle control's shape accordingly.
+        // Start/Stop camera
+        private void controlButton_Clicked(object sender, EventArgs e)
+            => StartStopCamera();
+
         private async void StartStopCamera()
         {
             if (playing)
@@ -71,111 +89,147 @@ namespace AlanJayApp.Components.Pages
                 {
                     playing = false;
                     controlButton.Text = "Start";
-                    // Revert the toggle control to a green triangle.
                     toggleShape.Fill = Brush.Green;
                     SetTriangleGeometry();
                 }
             }
-            else
+            else if (cameraView.NumCamerasDetected > 0)
             {
-                if (cameraView.NumCamerasDetected > 0)
+                cameraView.Camera = cameraView.Cameras.First();
+                await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    cameraView.Camera = cameraView.Cameras.First();
-                    MainThread.BeginInvokeOnMainThread(async () =>
+                    if (await cameraView.StartCameraAsync() == CameraResult.Success)
                     {
-                        if (await cameraView.StartCameraAsync() == CameraResult.Success)
-                        {
-                            controlButton.Text = "Stop";
-                            playing = true;
-                            // Change the toggle control to a red square when the camera is on.
-                            toggleShape.Fill = Brush.Red;
-                            SetSquareGeometry();
-                        }
-                    });
-                }
+                        playing = true;
+                        controlButton.Text = "Stop";
+                        toggleShape.Fill = Brush.Red;
+                        SetSquareGeometry();
+                    }
+                });
             }
         }
 
-        // Event handler for the control button click. Toggles camera start/stop.
-        private void controlButton_Clicked(object sender, EventArgs e)
-        {
-            StartStopCamera();
-        }
-
-        // Event handler for barcode detection.
-        private void CameraView_BarcodeDetected(object sender, Camera.MAUI.ZXingHelper.BarcodeEventArgs args)
+        // On each barcode detection
+        private void CameraView_BarcodeDetected(object? s, BarcodeEventArgs args)
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                var vin = args.Result[0].Text?.Trim();
-                barcodeResult.Text = string.Format("BarcodeText on {0:HH:mm:ss}: {1}", DateTime.Now, vin);
-                VinScannerService.NotifyBarcodeScanned(vin);
+                _currentVin = args.Result[0].Text?.Trim();
+                barcodeResult.Text = $"VIN: {_currentVin}";
 
-                // Change border stroke to green for a thicker effect
                 cameraBorder.Stroke = Colors.Green;
-
-                // Revert after 1.5 seconds
                 Task.Delay(1500).ContinueWith(_ =>
-                {
                     MainThread.BeginInvokeOnMainThread(() =>
-                    {
-                        cameraBorder.Stroke = Color.FromArgb("#CCCCCC");
-                    });
-                });
+                        cameraBorder.Stroke = Color.FromArgb("#CCCCCC")));
+
+                uploadButton.IsEnabled =
+                    !string.IsNullOrWhiteSpace(_currentVin) &&
+                    photoPaths.Count > 0;
             });
         }
 
-
-
-        // Event handler for the back button to navigate back.
+        // Navigate back
         private async void BackButton_Clicked(object sender, EventArgs e)
-        {
-            await Navigation.PopAsync();
-        }
+            => await Navigation.PopAsync();
 
-        // ---------------------------------------------------------------------
-        // SKCanvasView PaintSurface event handlers for blurred background halves.
-        // ---------------------------------------------------------------------
-
-       
-
-        // ---------------------------------------------------------------------
-        // Helper Methods for the Toggle Control UI
-        // ---------------------------------------------------------------------
-
-        // Sets the toggle control shape to a green triangle (pointing right).
+        // Draw right-pointing triangle
         private void SetTriangleGeometry()
         {
-            var triangleGeometry = new PathGeometry();
-            var triangleFigure = new PathFigure
-            {
-                StartPoint = new Point(5, 5),
-                IsClosed = true,
-                IsFilled = true
-            };
-            // Triangle: from (5,5) to (5,65) to (65,35) forms a right-pointing triangle.
-            triangleFigure.Segments.Add(new LineSegment { Point = new Point(5, 65) });
-            triangleFigure.Segments.Add(new LineSegment { Point = new Point(65, 35) });
-            triangleGeometry.Figures.Add(triangleFigure);
-            toggleShape.Data = triangleGeometry;
+            var geo = new PathGeometry();
+            var fig = new PathFigure { StartPoint = new Point(5, 5), IsClosed = true, IsFilled = true };
+            fig.Segments.Add(new LineSegment { Point = new Point(5, 65) });
+            fig.Segments.Add(new LineSegment { Point = new Point(65, 35) });
+            geo.Figures.Add(fig);
+            toggleShape.Data = geo;
         }
 
-        // Sets the toggle control shape to a red square.
+        // Draw square
         private void SetSquareGeometry()
         {
-            var squareGeometry = new PathGeometry();
-            var squareFigure = new PathFigure
+            var geo = new PathGeometry();
+            var fig = new PathFigure { StartPoint = new Point(5, 5), IsClosed = true, IsFilled = true };
+            fig.Segments.Add(new LineSegment { Point = new Point(65, 5) });
+            fig.Segments.Add(new LineSegment { Point = new Point(65, 65) });
+            fig.Segments.Add(new LineSegment { Point = new Point(5, 65) });
+            geo.Figures.Add(fig);
+            toggleShape.Data = geo;
+        }
+
+        // ── Capture & thumbnail ──
+        private async void OnCapturePhotoClicked(object sender, EventArgs e)
+        {
+            if (!MediaPicker.Default.IsCaptureSupported)
+                return;
+
+            var result = await MediaPicker.Default.CapturePhotoAsync(
+                new MediaPickerOptions { Title = "Take a VIN photo" });
+
+            if (result == null)
+                return;
+
+            using var srcStream = await result.OpenReadAsync();
+            var filename = System.IO.Path.GetFileName(result.FileName);
+            var dest = System.IO.Path.Combine(FileSystem.AppDataDirectory, filename);
+
+            using var destStream = System.IO.File.OpenWrite(dest);
+            await srcStream.CopyToAsync(destStream);
+
+            // store & display thumbnail
+            photoPaths.Add(dest);
+            var thumb = new Image
             {
-                StartPoint = new Point(5, 5),
-                IsClosed = true,
-                IsFilled = true
+                Source = ImageSource.FromFile(dest),
+                WidthRequest = 100,
+                HeightRequest = 100,
+                Aspect = Aspect.AspectFill
             };
-            // Square: (5,5) -> (65,5) -> (65,65) -> (5,65)
-            squareFigure.Segments.Add(new LineSegment { Point = new Point(65, 5) });
-            squareFigure.Segments.Add(new LineSegment { Point = new Point(65, 65) });
-            squareFigure.Segments.Add(new LineSegment { Point = new Point(5, 65) });
-            squareGeometry.Figures.Add(squareFigure);
-            toggleShape.Data = squareGeometry;
+            photosContainer.Children.Add(thumb);
+
+            uploadButton.IsEnabled =
+                !string.IsNullOrWhiteSpace(_currentVin) &&
+                photoPaths.Count > 0;
+        }
+
+        private async void OnUploadClicked(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(_currentVin))
+            {
+                await DisplayAlert("No VIN", "Scan or seed a VIN first.", "OK");
+                return;
+            }
+
+            if (photoPaths.Count == 0)
+            {
+                await DisplayAlert("No Photos", "Capture at least one photo.", "OK");
+                return;
+            }
+
+            try
+            {
+                var container = _blobClient.GetBlobContainerClient("vin-photos");
+                await container.CreateIfNotExistsAsync(PublicAccessType.None);
+
+                foreach (var path in photoPaths)
+                {
+                    var blobName = $"{_currentVin}/{Path.GetFileName(path)}";
+                    var blob = container.GetBlobClient(blobName);
+
+                    using var fs = File.OpenRead(path);
+                    var headers = new BlobHttpHeaders { ContentType = "image/jpeg" };
+                    await blob.UploadAsync(fs, headers);
+                }
+
+                await DisplayAlert("Done",
+                    $"Uploaded {photoPaths.Count} photos for {_currentVin}.", "OK");
+
+                photoPaths.Clear();
+                photosContainer.Children.Clear();
+                uploadButton.IsEnabled = false;
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Upload Failed", ex.Message, "OK");
+            }
         }
     }
 }

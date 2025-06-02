@@ -44,6 +44,8 @@ namespace AlanJayApp.Data
         public DbSet<AzEmployeeWebGroup> AzEmployeeWebGroups { get; set; }
         public DbSet<AzVehicleDeal> AzVehicleDeals { get; set; }
 
+        public DbSet<AzVendors> AzVendors { get; set; }
+        public DbSet<AzPOs> AzPOs { get; set; }
 
 
 
@@ -67,7 +69,8 @@ namespace AlanJayApp.Data
 
             // Map WindowStickerOptions for tracking incomplete options
             modelBuilder.Entity<WindowStickerOption>().ToTable("WindowStickerOptions");
-
+            modelBuilder.Entity<AzVendors>().ToTable("azVendors");
+            modelBuilder.Entity<AzPOs>().ToTable("azPOs");
             modelBuilder.Entity<AzQuoteSummary>().ToTable("azQuoteSummary");
             modelBuilder.Entity<AzAgency>().ToTable("azAgency");
             modelBuilder.Entity<AzQCitems>().ToTable("azQCitems");
@@ -216,7 +219,9 @@ namespace AlanJayApp.Data
 
         public string? note { get; set; }
         public string? KeyCode { get; set; }
-        public int? KeyType { get; set; }
+
+        public bool locationChanged { get; set; }
+        public bool keyCodeChanged { get; set; }
     }
     public class AzVehicles
     {
@@ -497,5 +502,65 @@ namespace AlanJayApp.Data
         public string? Cash { get; set; }
 
         public decimal? FinanceReserve { get; set; }
+    }
+    public class AzVendors
+    {
+        [Key]
+        public int VendorID { get; set; }
+
+        [Required, StringLength(255)]
+        public string Vendor { get; set; } = null!;
+
+        public int DefaultMarkUp { get; set; }
+
+        [StringLength(255)]
+        public string? Make { get; set; }
+
+        [StringLength(255)]
+        public string? DropShipCode { get; set; }
+
+        [StringLength(255)]
+        public string? Address { get; set; }
+
+        [StringLength(255)]
+        public string? Phone { get; set; }
+
+        [StringLength(255)]
+        public string? Fax { get; set; }
+
+        [StringLength(255)]
+        public string? Email { get; set; }
+
+        [StringLength(255)]
+        public string? Other { get; set; }
+
+        [StringLength(255)]
+        public string? Location { get; set; }
+
+        [StringLength(255)]
+        public string? VendorNumber { get; set; }
+
+        public bool Inactive { get; set; }
+    }
+    public class AzPOs
+    {
+        [Key]
+        public int POID { get; set; }
+
+        public int? QuoteID { get; set; }
+        public int? VendorID { get; set; }
+        public int? ShipID { get; set; }
+        public bool? ShipToAgency { get; set; }
+        public int? PONum { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? Total { get; set; }
+
+        public DateTime? PrintDate { get; set; }
+        public bool? Revision { get; set; }
+        public int? Hours { get; set; }
+        public bool? PartsRec { get; set; }
+        public DateTime? PartsRecDate { get; set; }
+        public bool? ServiceComplete { get; set; }
     }
 }

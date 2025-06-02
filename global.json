@@ -1,0 +1,10 @@
+{
+  "sdk": {
+    "version": "8.0.301"
+  },
+  "workload": {
+    "manifestVersions": {
+      "ios": "17.4.0"       
+    }
+  }
+}

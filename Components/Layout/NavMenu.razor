@@ -33,19 +33,7 @@
                     }
                     
 
-                    @if (CurrentPage == "vinnumscan")
-                    {
-                        <li>
-                            <a href="/carlist" class="dropdown-item" @onclick="NavigateAndClose">
-                                Check-In List
-                                @if (@CarService.CarCount > 0)
-                                {
-                                    <span class="car-badge2">@CarService.CarCount</span>
-                                }
-                            </a>
-                        </li>
-                    }
-                    else if (CurrentPage == "windowsticker" || CurrentPage == "carlist" || CurrentPage == "reports" || CurrentPage == "home")
+                    @if (CurrentPage == "windowsticker" || CurrentPage == "carlist" || CurrentPage == "reports" || CurrentPage == "home")
                     {
                         <li><a href="/vinnumscan" class="dropdown-item" @onclick="NavigateAndClose">Vin Scan</a></li>
                     }
