@@ -19,7 +19,7 @@ jobs:
 
 
       # ─────────────────────────────────────────────────────────────────────────
-      # 2️⃣  Decode your three Base64‐encoded secrets into actual files
+      # 2️⃣  Decode your three Base64‐encoded secrets into actual files:
       #    • ${{ secrets.P12_BASE64 }} → signing.p12
       #    • ${{ secrets.PROFILE_BASE64 }} → app.mobileprovision
       #    • ${{ secrets.ASC_KEY_BASE64 }} → asc_key.p8
@@ -37,12 +37,12 @@ jobs:
 
       # ─────────────────────────────────────────────────────────────────────────
       # 3️⃣  Import your Distribution certificate (signing.p12) into a
-      #    throw-away keychain.  The apple-actions/import-codesign-certs@v2
-      #    action will:
-      #      • create a temp keychain
-      #      • import signing.p12 (using P12_PASSWORD)
-      #      • expose `steps.import-certs.outputs.keychain-path`
-      #      • clean up the keychain at the end of the job automatically
+      #     throw-away keychain.  The apple-actions/import-codesign-certs@v2
+      #     action will:
+      #       • create a temp keychain
+      #       • import signing.p12 (using P12_PASSWORD)
+      #       • expose `steps.import-certs.outputs.keychain-path`
+      #       • clean up the keychain at the end
       # ─────────────────────────────────────────────────────────────────────────
       - name: Import Apple Distribution certificate 🗝️
         id: import-certs
@@ -55,32 +55,32 @@ jobs:
       # ─────────────────────────────────────────────────────────────────────────
       # 4️⃣  Install your provisioning profile
       #      • Decode the CMS wrapper to plist → extract its UUID
-      #      • Place the .mobileprovision into ~/Library/MobileDevice/Provisioning Profiles/<UUID>.mobileprovision
-      #      • Export the UUID into $GITHUB_ENV so we can reference it in msbuild
+      #      • Place the .mobileprovision in ~/Library/MobileDevice/Provisioning Profiles/<UUID>.mobileprovision
+      #      • Export the UUID into $GITHUB_ENV so we can reference it in MSBuild
       # ─────────────────────────────────────────────────────────────────────────
       - name: Install provisioning profile 📦
         id: install-profile
         run: |
-          # Decode the mobileprovision to a temporary .plist so we can read its UUID
+          # Decode the mobileprovision to a temporary plist so we can read the UUID
           security cms -D -i app.mobileprovision -o profile.plist
 
-          # Extract the UUID
+          # Extract the UUID field
           uuid=$(/usr/libexec/PlistBuddy -c 'Print :UUID' profile.plist)
 
-          # Create the directory where Xcode expects provisioning profiles
+          # Create the folder that Xcode expects
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
 
-          # Copy the actual .mobileprovision into that folder, named by UUID
+          # Copy the .mobileprovision into that folder, named by UUID
           cp app.mobileprovision "$HOME/Library/MobileDevice/Provisioning Profiles/$uuid.mobileprovision"
 
-          # Expose the UUID as an environment variable for later
+          # Export the UUID for later MSBuild steps
           echo "IOS_PROFILE_UUID=$uuid" >> "$GITHUB_ENV"
 
           echo "✅ Installed provisioning profile at $uuid.mobileprovision"
-      
+
 
       # ─────────────────────────────────────────────────────────────────────────
-      # 5️⃣  Install the exact .NET 8.0 SDK you pinned in global.json
+      # 5️⃣  Install the exact .NET 8.0.301 SDK listed in global.json
       # ─────────────────────────────────────────────────────────────────────────
       - name: Setup .NET SDK 8.0 .301
         uses: actions/setup-dotnet@v3
@@ -89,21 +89,18 @@ jobs:
 
 
       # ─────────────────────────────────────────────────────────────────────────
-      # 6️⃣  Pin and install exactly the MAUI iOS workload (only iOS, NOT Woofer-all MAUI)
+      # 6️⃣  Pin & install just the MAUI iOS workload (skips Android, WinUI, etc.)
       # ─────────────────────────────────────────────────────────────────────────
       - name: Install maui-ios workload (v17.4.0)
         run: dotnet workload install maui-ios --version 17.4.0
 
 
       # ─────────────────────────────────────────────────────────────────────────
-      # 7️⃣  Build & sign your .IPA
-      #
-      #    • "dotnet publish" automatically does a restore (no need for a separate dotnet restore).
-      #    • We pass /p:BuildIpa=true & /p:CodesignKeychain=… & /p:CodesignProvision=…  
-      #    • The friendly name for your distribution certificate (as shown in your Apple Developer portal)
-      #      must exactly match. In your case: "Apple Distribution: rylan champion (YUDP2VB9YY)"
-      #    • We read the temporary keychain path from ${{ steps.import-certs.outputs.keychain-path }}  
-      #    • We read the provisioning-profile UUID from ${{ env.IOS_PROFILE_UUID }}  
+      # 7️⃣  Build & sign your .IPA in one step (msbuild auto-restores):
+      #      • /p:BuildIpa=true
+      #      • /p:CodesignKey="Apple Distribution: rylan champion (YUDP2VB9YY)"
+      #      • /p:CodesignKeychain="${{ steps.import-certs.outputs.keychain-path }}"
+      #      • /p:CodesignProvision="${{ env.IOS_PROFILE_UUID }}"
       # ─────────────────────────────────────────────────────────────────────────
       - name: Publish .NET MAUI iOS → .ipa
         run: |
@@ -127,7 +124,7 @@ jobs:
 
 
       # ─────────────────────────────────────────────────────────────────────────
-      # 8️⃣  Setup Ruby + Fastlane (via Bundler)
+      # 8️⃣  Setup Ruby + Bundler (caches gems automatically)
       # ─────────────────────────────────────────────────────────────────────────
       - name: Setup Ruby & Fastlane
         uses: ruby/setup-ruby@v1
@@ -137,25 +134,15 @@ jobs:
 
 
       # ─────────────────────────────────────────────────────────────────────────
-      # 9️⃣  Upload that .IPA to TestFlight / App Store Connect using Fastlane
-      #
-      #    We tell fastlane three environment variables:
-      #      • APP_STORE_CONNECT_API_KEY_KEY   = your Key ID (e.g. CVUBTX49V8)
-      #      • APP_STORE_CONNECT_API_KEY_ISSUER_ID = your Issuer ID (GUID)
-      #      • APP_STORE_CONNECT_API_KEY_CONTENT (Base64 payload of asc_key.p8)
-      #      • And we set APP_STORE_CONNECT_API_KEY_IS_KEY_CONTENT_BASE64=true  
-      #
-      #    Internally, fastlane sees `--api_key_path` or `ENV[“APP_STORE_CONNECT_API_KEY_CONTENT”]` and uses that Key to authenticate.
+      # 9️⃣  Upload that .IPA to TestFlight / ASC using Fastlane:
+      #     • We supply your Key ID + Issuer ID + the Base64‐encoded .p8 file
       # ─────────────────────────────────────────────────────────────────────────
       - name: Deliver to App Store Connect 🚀
-        uses: maierj/fastlane-action@v3
+        uses: maierj/fastlane-action@v3.1.0
         with:
           lane: deliver
         env:
-          # Key ID (“ASC_KEY_ID” → e.g. CVUBTX49V8)
-          APP_STORE_CONNECT_API_KEY_KEY:       ${{ secrets.ASC_KEY_ID }}
-          # Issuer ID (32-char GUID)
-          APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          # We’re supplying the .p8 contents as Base64:
-          APP_STORE_CONNECT_API_KEY_CONTENT:         ${{ secrets.ASC_KEY_BASE64 }}
+          APP_STORE_CONNECT_API_KEY_KEY:                ${{ secrets.ASC_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_ISSUER_ID:          ${{ secrets.ASC_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_IS_KEY_CONTENT_BASE64: 'true'
+          APP_STORE_CONNECT_API_KEY_CONTENT:            ${{ secrets.ASC_KEY_BASE64 }}
