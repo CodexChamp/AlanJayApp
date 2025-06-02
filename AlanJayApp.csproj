@@ -1,5 +1,28 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
+	<!-- ──────────────────────────────────────────────────────────────────── -->
+	<!-- 1) Turn off MAUI’s default wildcard includes so we don’t drag in     -->
+	<!--    all of wwwroot/ and Components/ into the iOS bundle              -->
+	<!-- ──────────────────────────────────────────────────────────────────── -->
+	<PropertyGroup>
+		<EnableDefaultItems>false</EnableDefaultItems>
+	</PropertyGroup>
+
+	<!-- ──────────────────────────────────────────────────────────────────── -->
+	<!-- 2) Manually include just your C# + Razor + MAUI Resources folders     -->
+	<!-- ──────────────────────────────────────────────────────────────────── -->
+	<ItemGroup>
+		<!-- All your .cs files -->
+		<Compile Include="**\*.cs" />
+
+		<!-- All your .razor components -->
+		<RazorComponent Include="**\*.razor" />
+
+		<!-- MAUI assets / fonts / icons from Resources\ -->
+		<MauiAsset Include="Resources\**\*" />
+		<MauiFont Include="Resources\Fonts\**\*" />
+		<MauiIcon Include="Resources\Images\**\*" />
+	</ItemGroup>
     <PropertyGroup>
         <TargetFrameworks>net8.0-android;net8.0-ios;net8.0-maccatalyst</TargetFrameworks>
         <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net8.0-windows10.0.19041.0</TargetFrameworks>
@@ -55,12 +78,9 @@
 
     <ItemGroup>
 		<!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\appicon.png"
-            BaseSize="512,512" />
 
 		<!-- Android mip-map icon (name = appicon) -->
-		<MauiAppIcon Include="Resources\AppIcon\appicon.png"
-					 AppIconName="appicon" />
+		<MauiAppIcon Include="Resources\AppIcon\appicon.png" AppIconName="appicon" />
         <!-- Splash Screen -->
         <MauiSplashScreen Include="wwwroot\Images\loading_screen.png" Color="fefeff" />
 
