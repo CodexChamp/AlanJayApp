@@ -11,29 +11,29 @@ jobs:
 
     steps:
       # ─────────────────────────────────────────────────────────────────────────────
-      # 1️⃣ Checkout code
+      # 1️⃣  CHECK OUT your repository
       # ─────────────────────────────────────────────────────────────────────────────
       - name: Checkout code
         uses: actions/checkout@v4
 
       # ─────────────────────────────────────────────────────────────────────────────
-      # 2️⃣ Decode Base64 secrets into files:
-      #       • signing.p12
-      #       • app.mobileprovision
-      #       • asc_key.p8
+      # 2️⃣  DECODE Base64 SECRETS INTO FILES
+      #      • signing.p12
+      #      • app.mobileprovision
+      #      • asc_key.p8
       # ─────────────────────────────────────────────────────────────────────────────
       - name: Decode iOS artifacts
         run: |
-          echo "$P12_BASE64"      | base64 --decode > signing.p12
-          echo "$PROFILE_BASE64"  | base64 --decode > app.mobileprovision
-          echo "$ASC_KEY_BASE64"  | base64 --decode > asc_key.p8
+          echo "$P12_BASE64"     | base64 --decode > signing.p12
+          echo "$PROFILE_BASE64" | base64 --decode > app.mobileprovision
+          echo "$ASC_KEY_BASE64" | base64 --decode > asc_key.p8
         env:
           P12_BASE64:     ${{ secrets.P12_BASE64 }}
           PROFILE_BASE64: ${{ secrets.PROFILE_BASE64 }}
           ASC_KEY_BASE64: ${{ secrets.ASC_KEY_BASE64 }}
 
       # ─────────────────────────────────────────────────────────────────────────────
-      # 3️⃣ Import the P12 into a temporary keychain named “temp”
+      # 3️⃣  IMPORT the P12 into a temporary keychain called “temp”
       # ─────────────────────────────────────────────────────────────────────────────
       - name: Import Distribution certificate
         id: import-certs
@@ -43,8 +43,8 @@ jobs:
           p12-password: ${{ secrets.P12_PASSWORD }}
 
       # ─────────────────────────────────────────────────────────────────────────────
-      # 4️⃣ Install provisioning profile into ~/Library/MobileDevice/Provisioning Profiles/
-      #    • Extract its UUID, copy to the proper folder, export IOS_PROFILE_UUID
+      # 4️⃣  INSTALL the provisioning profile into ~/Library/MobileDevice/Provisioning Profiles/
+      #      • Extract its UUID, copy to the standard folder, export IOS_PROFILE_UUID
       # ─────────────────────────────────────────────────────────────────────────────
       - name: Install provisioning profile
         id: install-profile
@@ -52,11 +52,12 @@ jobs:
           security cms -D -i app.mobileprovision -o profile.plist
           uuid=$(/usr/libexec/PlistBuddy -c 'Print :UUID' profile.plist)
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-          cp app.mobileprovision "$HOME/Library/MobileDevice/Provisioning Profiles/$uuid.mobileprovision"
+          cp app.mobileprovision \
+            "$HOME/Library/MobileDevice/Provisioning Profiles/$uuid.mobileprovision"
           echo "IOS_PROFILE_UUID=$uuid" >> "$GITHUB_ENV"
 
       # ─────────────────────────────────────────────────────────────────────────────
-      # 5️⃣ Use exactly .NET 8.0.301 (per global.json)
+      # 5️⃣  SETUP .NET SDK 8.0.301 (per your global.json)
       # ─────────────────────────────────────────────────────────────────────────────
       - name: Use .NET SDK 8.0.301
         uses: actions/setup-dotnet@v3
@@ -64,32 +65,33 @@ jobs:
           dotnet-version: 8.0.301
 
       # ─────────────────────────────────────────────────────────────────────────────
-      # 6️⃣ Pin & install exactly maui-ios@17.4.0
-      #    (must happen before we restore net8.0-ios)
+      # 6️⃣  PIN & INSTALL the exact maui-ios workload version (17.4.0)
+      #      This must run BEFORE any “msbuild … /t:Restore /p:TargetFramework=net8.0-ios” call
       # ─────────────────────────────────────────────────────────────────────────────
       - name: Install maui-ios@17.4.0
-        run: dotnet workload install maui-ios --version 17.4.0
+        run: |
+          dotnet workload restore          # ensures global.json workloads are restored
+          dotnet workload install maui-ios --version 17.4.0
 
       # ─────────────────────────────────────────────────────────────────────────────
-      # 7️⃣ Restore only net8.0-ios assets (skipping Android entirely)
-      #    This produces obj/project.assets.json for net8.0-ios/ios-arm64.
+      # 7️⃣  RESTORE only the net8.0-ios target (skipping Android)
+      #      Adjust the path to your .csproj if it sits in a subfolder
       # ─────────────────────────────────────────────────────────────────────────────
-      - name: Restore net8.0-ios only
+      - name: Restore net8.0-ios assets
         run: |
-          dotnet msbuild ./AlanJayApp.csproj \
+          dotnet msbuild ./AlanJayApp/AlanJayApp.csproj \
             /t:Restore \
             /p:TargetFramework=net8.0-ios \
             /p:RuntimeIdentifier=ios-arm64
 
       # ─────────────────────────────────────────────────────────────────────────────
-      # 8️⃣ Publish just net8.0-ios → signed .ipa
-      #    • Uses the “temp” keychain identity installed earlier
-      #    • Passes IOS_PROFILE_UUID extracted above
-      #    • --no-restore to skip Android/other frameworks
+      # 8️⃣  PUBLISH the signed .ipa (no Android)
+      #      • Uses “temp” keychain from step 3
+      #      • CodesignProvision references $(IOS_PROFILE_UUID)
       # ─────────────────────────────────────────────────────────────────────────────
       - name: Publish .NET MAUI iOS → .ipa
         run: |
-          dotnet publish ./AlanJayApp.csproj \
+          dotnet publish ./AlanJayApp/AlanJayApp.csproj \
             -c Release \
             -f net8.0-ios \
             -r ios-arm64 \
@@ -102,13 +104,13 @@ jobs:
             /p:PublishTrimmed=true \
             /p:MtouchLink=SdkOnly
 
-      - name: List IPA folder
+      - name: List IPA output
         run: |
           echo "--- out folder contents ---"
           ls -l out
 
       # ─────────────────────────────────────────────────────────────────────────────
-      # 9️⃣ Setup Ruby & Fastlane
+      # 9️⃣  SETUP Ruby & FASTLANE
       # ─────────────────────────────────────────────────────────────────────────────
       - name: Setup Ruby & Fastlane
         uses: ruby/setup-ruby@v1
@@ -117,8 +119,8 @@ jobs:
           bundler-cache: true
 
       # ─────────────────────────────────────────────────────────────────────────────
-      # 🔟 Deliver to App Store Connect via Fastlane
-      #    Uses maierj/fastlane-action@v3.1.0
+      # 🔟  DELIVER the .ipa to TestFlight via Fastlane
+      #      • Uses maierj/fastlane-action@v3.1.0
       # ─────────────────────────────────────────────────────────────────────────────
       - name: Deliver to App Store Connect
         uses: maierj/fastlane-action@v3.1.0
