@@ -9,23 +9,17 @@ on:
       - master
 
 jobs:
-  ios-build:                        # ← must use a valid ID (ASCII letters, digits, '-' or '_')
-    runs-on: macos-15               # macOS 15 includes Xcode 16 / iOS 18 SDK
+  ios-build:
+    runs-on: macos-15
 
     env:
       # Exact code‐sign identity as it appears in your .p12 certificate
       CODESIGN_IDENTITY: "Apple Distribution: rylan champion (YUDP2VB9YY)"
-
-      # Pin to exact MAUI iOS workload version (as in your global.json)
-      MAUI_IOS_WORKLOAD: "17.4.0"
-
+      
       # Build configuration
       BUILD_CONFIGURATION: "Release"
 
     steps:
-      ######################################################################
-      # 0️⃣  (Optional) Show runner OS & tool versions for debugging
-      ######################################################################
       - name: Env / Tool Versions 🔍
         run: |
           echo "== macOS Version =="
@@ -40,62 +34,32 @@ jobs:
           echo "== Dotnet (before install) =="
           dotnet --version || echo "not installed yet"
 
-      ######################################################################
-      # 1️⃣  Check out the source code
-      ######################################################################
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      ######################################################################
-      # 2️⃣  Cache NuGet packages so 'dotnet restore' is faster
-      ######################################################################
       - name: Cache NuGet packages
         uses: actions/cache@v3
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
 
-      ######################################################################
-      # 3️⃣  Cache .NET workload packs (so “maui-ios” install is fast)
-      ######################################################################
       - name: Cache .NET workload packs
         uses: actions/cache@v3
         with:
           path: ~/.dotnet
           key: dotnet-workloads-${{ runner.os }}-8.0.301
 
-      ############################################################################
-      # 4️⃣  Restore signing artifacts (from your GitHub Secrets, base64‐encoded):
-      #      • P12_BASE64      → Apple Distribution certificate (.p12)
-      #      • PROFILE_BASE64  → iOS provisioning profile (.mobileprovision)
-      #      • ASC_KEY_BASE64  → App Store Connect API key (.p8)
-      #
-      #    You must define these secrets under Settings → Secrets → Actions:
-      #      • P12_BASE64
-      #      • PROFILE_BASE64
-      #      • ASC_KEY_BASE64
-      #
-      #    And also “plain‐text” secrets:
-      #      • P12_PASSWORD
-      #      • ASC_KEY_ID
-      #      • ASC_ISSUER_ID
-      ############################################################################
       - name: Restore signing files
         run: |
           echo "$P12_BASE64"      | base64 --decode > signing.p12
           echo "$PROFILE_BASE64"  | base64 --decode > app.mobileprovision
           echo "$ASC_KEY_BASE64"  | base64 --decode > asc_key.p8
-
-          # Verify they exist
           ls -l signing.p12 app.mobileprovision asc_key.p8
         env:
           P12_BASE64:     ${{ secrets.P12_BASE64 }}
           PROFILE_BASE64: ${{ secrets.PROFILE_BASE64 }}
           ASC_KEY_BASE64: ${{ secrets.ASC_KEY_BASE64 }}
 
-      ######################################################################
-      # 5️⃣  Quick sanity checks on the .p12
-      ######################################################################
       - name: Check P12 Hash 🔍
         run: shasum -a 256 signing.p12
 
@@ -108,9 +72,6 @@ jobs:
         env:
           P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
 
-      ######################################################################
-      # 6️⃣  Import the .p12 into a temporary keychain (apple‐actions helper)
-      ######################################################################
       - name: Import Signing Certificate 🔑
         uses: apple-actions/import-codesign-certs@v2
         id: import-certs
@@ -121,51 +82,31 @@ jobs:
       - name: List CodeSigning Identities 🔍
         run: security find-identity -p codesigning -v
 
-      ######################################################################
-      # 7️⃣  Setup Ruby & Bundler (for Fastlane)
-      ######################################################################
       - name: Setup Ruby & Bundler
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
           bundler-cache: true
 
-      ######################################################################
-      # 8️⃣  Install the provisioning profile (.mobileprovision)
-      ######################################################################
       - name: Install Provisioning Profile 🔏
         id: install-profile
         run: |
-          # Decode the CMS wrapper to plain XML‐plist
           security cms -D -i app.mobileprovision -o profile.plist
-
-          # Extract the UUID so we can name it correctly
           uuid=$(/usr/libexec/PlistBuddy -c 'Print :UUID' profile.plist)
           echo "UUID=$uuid" >> "$GITHUB_ENV"
-
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
           cp app.mobileprovision \
              "$HOME/Library/MobileDevice/Provisioning Profiles/$uuid.mobileprovision"
-
           echo "Installed provisioning profile as $uuid.mobileprovision"
 
-      ######################################################################
-      # 9️⃣  Install .NET 8.0.301 (matching your global.json)
-      ######################################################################
       - name: Setup .NET SDK 8.0.301
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '8.0.301'
 
-      ######################################################################
-      # 🔟  Pin & install exactly maui-ios@17.4.0 (skips auto‐update)
-      ######################################################################
-      - name: Pin & Install MAUI iOS workload @17.4.0
-        run: dotnet workload install maui-ios --version ${{ env.MAUI_IOS_WORKLOAD }}
+      - name: Install MAUI iOS workload
+        run: dotnet workload install maui-ios
 
-      ######################################################################
-      # 1️⃣1️⃣  Restore only the iOS assets (skipping Android)
-      ######################################################################
       - name: Restore iOS assets only
         run: |
           dotnet msbuild ./AlanJayApp.csproj \
@@ -173,9 +114,6 @@ jobs:
             /p:TargetFramework=net8.0-ios \
             /p:RuntimeIdentifier=ios-arm64
 
-      ######################################################################
-      # 1️⃣2️⃣  Publish a fully‐signed, trimmed .ipa (for iOS 18+)
-      ######################################################################
       - name: Publish .NET MAUI for iOS 🚀
         run: |
           dotnet publish ./AlanJayApp.csproj \
@@ -198,11 +136,8 @@ jobs:
           echo "---- Published .ipa → out/ ----"
           ls -l out
 
-      ######################################################################
-      # 1️⃣3️⃣  Deliver to TestFlight / App Store Connect (Fastlane)
-      ######################################################################
       - name: Deliver to App Store Connect ✈️
-        uses: maierj/fastlane-action@v3.1.0     # ← must use a real release tag
+        uses: maierj/fastlane-action@v3.1.0
         with:
           lane: deliver
         env:
