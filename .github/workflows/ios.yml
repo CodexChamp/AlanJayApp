@@ -118,7 +118,7 @@ jobs:
             /p:CodesignKey="Apple Distribution: rylan champion (YUDP2VB9YY)" \
             /p:CodesignKeychain="${{ steps.import-certs.outputs.keychain-path }}" \
             /p:CodesignProvision="${{ env.UUID }}" \
-            /p:PublishTrimmed=false \
+            /p:PublishTrimmed=true \
             /p:MtouchLink=SdkOnly
 
       - name: List publish output 🔍
