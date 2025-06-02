@@ -13,37 +13,37 @@ jobs:
       # 1️⃣ CHECK OUT YOUR CODE
       - uses: actions/checkout@v4
 
-      # 2️⃣ SET UP .NET 8.0.301
+      # 2️⃣ INSTALL .NET 8.0.301
       - uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 8.0.301
 
-      # 3️⃣ SHOW RUNNER/XCODE INFO
+      # 3️⃣ SHOW RUNNER / XCODE / DOTNET INFO
       - name: Env / tool versions
         run: |
           sw_vers
           xcodebuild -version | head -1
           dotnet --info
 
-      # 4️⃣ DECODE & SAVE YOUR SIGNING ARTIFACTS
+      # 4️⃣ DECODE & SAVE SIGNING FILES
       - name: Restore signing files
         run: |
-          echo "${{ secrets.P12_BASE64 }}"    | base64 --decode > signing.p12
-          echo "${{ secrets.PROFILE_BASE64 }}"| base64 --decode > app.mobileprovision
-          echo "${{ secrets.ASC_KEY_BASE64 }}" | base64 --decode > asc_key.p8
+          echo "${{ secrets.P12_BASE64 }}"     | base64 --decode > signing.p12
+          echo "${{ secrets.PROFILE_BASE64 }}" | base64 --decode > app.mobileprovision
+          echo "${{ secrets.ASC_KEY_BASE64 }}"  | base64 --decode > asc_key.p8
         env:
           P12_BASE64:     ${{ secrets.P12_BASE64 }}
           PROFILE_BASE64: ${{ secrets.PROFILE_BASE64 }}
           ASC_KEY_BASE64: ${{ secrets.ASC_KEY_BASE64 }}
 
-      # 5️⃣ IMPORT YOUR P12 INTO A TEMPORARY KEYCHAIN
+      # 5️⃣ IMPORT .p12 INTO A TEMP KEYCHAIN
       - id: import-certs
         uses: apple-actions/import-codesign-certs@v2
         with:
           p12-filepath: signing.p12
           p12-password: ${{ secrets.P12_PASSWORD }}
 
-      # 6️⃣ INSTALL THE .mobileprovision
+      # 6️⃣ INSTALL .mobileprovision
       - id: install-profile
         run: |
           security cms -D -i app.mobileprovision -o tmp.plist
@@ -53,7 +53,7 @@ jobs:
             "$HOME/Library/MobileDevice/Provisioning Profiles/$uuid.mobileprovision"
           echo "UUID=$uuid" >> "$GITHUB_ENV"
 
-      # 7️⃣ CACHE NuGet PACKAGES & .NET WORKLOADS
+      # 7️⃣ CACHE NuGet PACKAGES & WORKLOADS
       - uses: actions/cache@v3
         with:
           path: |
@@ -65,7 +65,7 @@ jobs:
           restore-keys: |
             nuget-workloads-${{ runner.os }}-lockfile-
 
-      # 8️⃣ RESTORE ALL WORKLOADS (picks up global.json pin)
+      # 8️⃣ RESTORE ALL WORKLOADS (sees global.json pin to maui-ios@17.4)
       - run: dotnet workload restore
         name: Restore .NET workloads
 
@@ -76,11 +76,9 @@ jobs:
       # 🔟 RESTORE ONLY iOS ASSETS (skip Android)
       - name: Restore iOS assets only
         run: |
-          dotnet restore ./AlanJayApp.csproj \
-            --framework net8.0-ios \
-            --runtime ios-arm64
+          dotnet restore ./AlanJayApp.csproj --framework net8.0-ios --runtime ios-arm64
 
-      # 1️⃣1️⃣ PUBLISH YOUR .ipa (SIGNED, iOS 17.5 SDK, NO TRIMMING)
+      # 1️⃣1️⃣ PUBLISH .ipa (signed, iOS 17.5 SDK, no trimming)
       - name: Publish .NET MAUI for iOS
         run: |
           dotnet publish ./AlanJayApp.csproj \
@@ -100,13 +98,13 @@ jobs:
       - name: List publish output
         run: ls -l out
 
-      # 1️⃣2️⃣ SET UP RUBY + FASTLANE
+      # 1️⃣2️⃣ INSTALL RUBY & FASTLANE
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
           bundler-cache: true
 
-      # 1️⃣3️⃣ DELIVER TO TESTFLIGHT
+      # 1️⃣3️⃣ DELIVER to TestFlight
       - name: Deliver to App Store Connect
         env:
           APP_STORE_CONNECT_API_KEY_KEY:       ${{ secrets.ASC_KEY_ID }}
