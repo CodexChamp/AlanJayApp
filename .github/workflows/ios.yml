@@ -1,4 +1,4 @@
-# File: .github/workflows/ios‐maui‐build.yml
+# File: .github/workflows/ios-maui-build.yml
 
 name: Build & Distribute iOS
 
@@ -9,20 +9,22 @@ on:
       - master
 
 jobs:
-  ios‐build:
-    runs-on: macos-15   # Use macOS 15 (which includes Xcode 16/iOS 18 SDK)
+  ios-build:                        # ← Use a plain ASCII hyphen here
+    runs-on: macos-15               # Use macOS 15 (Xcode 16 / iOS 18 SDK)
 
     env:
-      # The code‐sign identity exactly as it appears inside your .p12
+      # Your code‐sign identity (must exactly match the Common Name in the P12)
       CODESIGN_IDENTITY: "Apple Distribution: rylan champion (YUDP2VB9YY)"
-      # Pin to the exact version of the MAUI iOS workload in your global.json
+
+      # Pin to the exact version of the MAUI iOS workload in global.json
       MAUI_IOS_WORKLOAD: "17.4.0"
-      # Build in Release configuration
+
+      # We’ll build in Release configuration
       BUILD_CONFIGURATION: "Release"
 
     steps:
       ######################################################################
-      # 0️⃣  Optional: Show runner OS & tool versions for debugging
+      # 0️⃣  (Optional) Show runner OS & tooling for debugging if needed
       ######################################################################
       - name: Env / Tool Versions 🔍
         run: |
@@ -39,13 +41,13 @@ jobs:
           dotnet --version || echo "not installed yet"
 
       ######################################################################
-      # 1️⃣  Check out your code
+      # 1️⃣  Check out your source code
       ######################################################################
       - name: Checkout Code
         uses: actions/checkout@v4
 
       ######################################################################
-      # 2️⃣  Cache NuGet packages (so we don’t re‐download on every run)
+      # 2️⃣  Cache NuGet packages so subsequent runs are faster
       ######################################################################
       - name: Cache NuGet packages
         uses: actions/cache@v3
@@ -54,7 +56,7 @@ jobs:
           key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
 
       ######################################################################
-      # 3️⃣  Cache .NET workload packs (so we don’t reinstall maui-ios each run)
+      # 3️⃣  Cache .NET workload packs (so “maui-ios” install is instant)
       ######################################################################
       - name: Cache .NET workload packs
         uses: actions/cache@v3
@@ -63,28 +65,28 @@ jobs:
           key: dotnet-workloads-${{ runner.os }}-8.0.301
 
       ############################################################################
-      # 4️⃣  Restore signing artifacts from GitHub Secrets (base64‐encoded)
-      #      P12_BASE64          → Apple Distribution certificate (.p12)
-      #      PROFILE_BASE64      → iOS provisioning profile (.mobileprovision)
-      #      ASC_KEY_BASE64      → App Store Connect API key (.p8)
+      # 4️⃣  Restore signing files from GitHub Secrets (base64‐encoded):
+      #      • P12_BASE64     → Apple Distribution certificate (.p12)
+      #      • PROFILE_BASE64 → iOS provisioning profile (.mobileprovision)
+      #      • ASC_KEY_BASE64 → App Store Connect API key (.p8)
       #
-      #    * You must create these three secrets in your GitHub repo:
-      #         • P12_BASE64
-      #         • PROFILE_BASE64
-      #         • ASC_KEY_BASE64
-      #    * And also create these three “plain” secrets:
-      #         • P12_PASSWORD     (your P12’s password)
-      #         • ASC_KEY_ID       (App Store Connect Key ID)
-      #         • ASC_ISSUER_ID    (App Store Connect Issuer ID)
+      #    You must define these three secrets in your GitHub repo:
+      #      • P12_BASE64
+      #      • PROFILE_BASE64
+      #      • ASC_KEY_BASE64
+      #
+      #    Additionally, define these three “plain” secrets (not base64):
+      #      • P12_PASSWORD     (password for your P12)
+      #      • ASC_KEY_ID       (App Store Connect Key ID)
+      #      • ASC_ISSUER_ID    (App Store Connect Issuer ID)
       ############################################################################
       - name: Restore signing files
         run: |
-          # Decode each base64‐encoded secret into its file
           echo "$P12_BASE64"   | base64 --decode > signing.p12
           echo "$PROFILE_BASE64" | base64 --decode > app.mobileprovision
           echo "$ASC_KEY_BASE64" | base64 --decode > asc_key.p8
 
-          # List them to confirm they exist
+          # Confirm files exist
           ls -l signing.p12 app.mobileprovision asc_key.p8
         env:
           P12_BASE64:     ${{ secrets.P12_BASE64 }}
@@ -107,7 +109,7 @@ jobs:
           P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
 
       ######################################################################
-      # 6️⃣  Import the .p12 into a temporary keychain via apple-actions
+      # 6️⃣  Import the .p12 into a temporary keychain (via apple-actions)
       ######################################################################
       - name: Import Signing Certificate 🔑
         uses: apple-actions/import-codesign-certs@v2
@@ -120,7 +122,7 @@ jobs:
         run: security find-identity -p codesigning -v
 
       ######################################################################
-      # 7️⃣  Setup Ruby & Bundler for Fastlane (used in final upload)
+      # 7️⃣  Setup Ruby & Bundler (needed for Fastlane later)
       ######################################################################
       - name: Setup Ruby & Bundler
         uses: ruby/setup-ruby@v1
@@ -129,19 +131,15 @@ jobs:
           bundler-cache: true
 
       ######################################################################
-      # 8️⃣  Install the iOS provisioning profile so Xcode can see it
+      # 8️⃣  Install the provisioning profile so Xcode can see it
       ######################################################################
       - name: Install Provisioning Profile 🔏
         id: install-profile
         run: |
-          # Decode the .mobileprovision into a plist
           security cms -D -i app.mobileprovision -o profile.plist
-
-          # Extract its UUID field
           uuid=$(/usr/libexec/PlistBuddy -c 'Print :UUID' profile.plist)
           echo "UUID=$uuid" >> "$GITHUB_ENV"
 
-          # Copy it into the standard location with its UUID filename
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
           cp app.mobileprovision \
              "$HOME/Library/MobileDevice/Provisioning Profiles/$uuid.mobileprovision"
@@ -149,7 +147,7 @@ jobs:
           echo "Installed provisioning profile as $uuid.mobileprovision"
 
       ######################################################################
-      # 9️⃣  Install .NET 8.0.301 (per global.json)
+      # 9️⃣  Install .NET 8.0.301 (according to your global.json)
       ######################################################################
       - name: Setup .NET SDK 8.0.301
         uses: actions/setup-dotnet@v3
@@ -157,13 +155,13 @@ jobs:
           dotnet-version: '8.0.301'
 
       ######################################################################
-      # 🔟  Pin & install exactly maui-ios@17.4.0
+      # 🔟  Pin & install exactly the maui-ios workload (17.4.0)
       ######################################################################
       - name: Pin & Install MAUI iOS workload @17.4.0
         run: dotnet workload install maui-ios --version ${{ env.MAUI_IOS_WORKLOAD }}
 
       ######################################################################
-      # 1️⃣1️⃣  Restore only the iOS assets (skip Android entirely)
+      # 1️⃣1️⃣  Restore only the iOS bits (skip Android entirely)
       ######################################################################
       - name: Restore iOS assets only
         run: |
@@ -173,10 +171,9 @@ jobs:
             /p:RuntimeIdentifier=ios-arm64
 
       ######################################################################
-      # 1️⃣2️⃣  Publish a fully‐signed, trimmed .ipa for iOS 18
-      #       • MUST have /p:PublishTrimmed=true on iOS 18+. 
-      #       • We pass in the keychain path from import-certs@v2 so Xcode
-      #         can find the certificate.
+      # 1️⃣2️⃣  Publish a fully‐signed, trimmed .ipa for iOS 18+ targets
+      #        • iOS 18 requires /p:PublishTrimmed=true
+      #        • We pass the temporary keychain from step “import-certs”
       ######################################################################
       - name: Publish .NET MAUI for iOS 🚀
         run: |
@@ -201,9 +198,7 @@ jobs:
           ls -l out
 
       ######################################################################
-      # 1️⃣3️⃣  Upload to TestFlight via Fastlane’s “deliver” lane
-      #       We feed it your App Store Connect Key ID, Issuer ID, and
-      #       the base64 .p8 content
+      # 1️⃣3️⃣  Deliver to TestFlight / App Store Connect (via Fastlane’s deliver)
       ######################################################################
       - name: Deliver to App Store Connect ✈️
         uses: maierj/fastlane-action@v3
