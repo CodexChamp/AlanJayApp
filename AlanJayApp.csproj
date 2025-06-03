@@ -77,7 +77,7 @@
     <!-- Raw Assets -->
     <MauiAsset Include="Resources/Raw/**"
                LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
-    <MauiAsset Remove="fastlane\**\*.*" />
+    <MauiAsset Remove="fastlane/**/*.*" />
   </ItemGroup>
 
   <!-- ───────────────────────────────────────────────────────────────────────────
