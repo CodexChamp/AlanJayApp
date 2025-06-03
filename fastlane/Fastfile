@@ -1,16 +1,21 @@
-default_platform(:ios)
+default_platform :ios
 
 platform :ios do
-  desc "Push a new beta build to TestFlight"
   lane :beta do
     ipa_path = ENV["FASTLANE_IPA_PATH"]
 
     deliver(
       ipa: ipa_path,
-      app_identifier: "com.companyname.alanjayfleet",   # ← EXACTLY this string
-      skip_metadata:  true,
+      app_identifier: "com.companyname.alanjayfleet",  
+      api_key: {
+        key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],       
+        issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"], 
+        key_content: ENV["APP_STORE_CONNECT_API_KEY_CONTENT"], 
+        in_house: false
+      },
+      skip_metadata: true,
       skip_screenshots: true,
-      submit_for_review: false
+      skip_app_version_update: true
     )
   end
 end
