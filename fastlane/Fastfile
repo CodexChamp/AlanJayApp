@@ -1,16 +1,16 @@
-# fastlane/Fastfile
-
 default_platform(:ios)
 
 platform :ios do
   desc "Push a new beta build to TestFlight"
-  lane :deliver do
-    # We will set FASTLANE_IPA_PATH in our GitHub Actions workflow
+  lane :beta do
+    # The IPA path comes from FASTLANE_IPA_PATH in the GitHub Actions environment
+    ipa_path = ENV["FASTLANE_IPA_PATH"]
+
     deliver(
-      ipa: ENV['FASTLANE_IPA_PATH'],
-      skip_metadata: true,    # i.e. do not upload metadata JSON
-      skip_screenshots: true, # i.e. do not upload screenshots
-      submit_for_review: false
+      ipa: ipa_path,
+      skip_metadata:  true,   # since we just want to upload the IPA
+      skip_screenshots: true,  # no screenshots from CI 
+      submit_for_review: false # don’t auto-submit to review from CI
     )
   end
 end
