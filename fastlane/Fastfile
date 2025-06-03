@@ -7,7 +7,7 @@ platform :ios do
 
     deliver(
       ipa: ipa_path,
-      app_identifier: "com.alanjay.alanjayfleet",   # ← EXACTLY this string
+      app_identifier: "com.companyname.alanjayfleet",   # ← EXACTLY this string
       skip_metadata:  true,
       skip_screenshots: true,
       submit_for_review: false
