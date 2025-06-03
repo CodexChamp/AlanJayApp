@@ -1,16 +1,19 @@
+# fastlane/Fastfile
+
 default_platform(:ios)
 
 platform :ios do
-  desc "Push a new beta build to TestFlight"
+  desc "Push a new beta build to TestFlight (non-interactive)"
   lane :beta do
-    # The IPA path comes from FASTLANE_IPA_PATH in the GitHub Actions environment
     ipa_path = ENV["FASTLANE_IPA_PATH"]
 
     deliver(
       ipa: ipa_path,
-      skip_metadata:  true,   # since we just want to upload the IPA
-      skip_screenshots: true,  # no screenshots from CI 
-      submit_for_review: false # don’t auto-submit to review from CI
+      app_identifier: "com.companyname.alanjayapp",   # ← YOUR iOS bundle ID here
+      api_key_path:  "asc_key.p8",                    # ← the `.p8` file we’ll create in CI
+      skip_metadata:  true,
+      skip_screenshots: true,
+      submit_for_review: false
     )
   end
 end
