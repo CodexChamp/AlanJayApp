@@ -77,9 +77,17 @@
     <!-- Raw Assets -->
     <MauiAsset Include="Resources/Raw/**"
                LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
-    <MauiAsset Remove="fastlane/**/*.*" />
-  </ItemGroup>
 
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Exclude any file under fastlane/ from being treated as a MAUI asset -->
+    <MauiAsset Remove="fastlane/**" />
+
+    <!-- In case MSBuild also tried to pull it in as “Content” or “EmbeddedResource” -->
+    <Content    Remove="fastlane/**" />
+    <EmbeddedResource Remove="fastlane/**" />
+    <None       Remove="fastlane/**" />
+  </ItemGroup>
   <!-- ───────────────────────────────────────────────────────────────────────────
        This ItemGroup explicitly removes the conflicting image files so that
        the iOS Resizetizer won’t see duplicate output names. Without this,
