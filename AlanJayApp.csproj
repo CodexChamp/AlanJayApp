@@ -77,6 +77,7 @@
     <!-- Raw Assets -->
     <MauiAsset Include="Resources/Raw/**"
                LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+    <MauiAsset Remove="fastlane\**\*.*" />
   </ItemGroup>
 
   <!-- ───────────────────────────────────────────────────────────────────────────
@@ -91,6 +92,7 @@
     <MauiImage Remove="Resources/Images/dotnet_bot.svg" />
     <MauiImage Remove="Resources/Images/favicon16f.png" />
     <MauiImage Remove="Resources/Images/favicon32f.png" />
+
   </ItemGroup>
 
   <!-- If you had explicitly added any “wwwroot/JSON/...” or “Components/...”
