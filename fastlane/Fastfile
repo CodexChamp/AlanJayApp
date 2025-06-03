@@ -1,27 +1,16 @@
-# fastlane/Fastfile
-
 default_platform(:ios)
 
 platform :ios do
-  ############################################################
-  # ✅  BETA lane (uploads your newly built .ipa to TestFlight)
-  ############################################################
   desc "Push a new beta build to TestFlight"
   lane :beta do
-    # 1) Grab the path to the .ipa that our GitHub Action built:
-    ipa = ENV["FASTLANE_IPA_PATH"]
-    UI.message("🔍  IPA path = #{ipa}")
+    ipa_path = ENV["FASTLANE_IPA_PATH"]
 
-    # 2) Call `deliver` to upload the .ipa to TestFlight/App Store Connect.
-    #    We tell `deliver` to skip all metadata/screenshots since we
-    #    only want to push the IPA itself. Adjust `app_identifier` to
-    #    match your bundle ID.
     deliver(
-      ipa: ipa,
-      app_identifier: "com.companyname.alanjayapp",  # ← replace with your actual bundle ID
-      skip_metadata:    true,    # don't upload metadata (Info.plist, descriptions, etc.)
-      skip_screenshots: true,    # don't upload screenshots
-      submit_for_review: false   # set to true if you want auto‐submission to review
+      ipa: ipa_path,
+      app_identifier: "com.alanjay.alanjayfleet",   # ← EXACTLY this string
+      skip_metadata:  true,
+      skip_screenshots: true,
+      submit_for_review: false
     )
   end
 end
