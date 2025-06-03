@@ -136,13 +136,27 @@ jobs:
           echo "---- Published .ipa → out/ ----"
           ls -l out
 
+      - name: Create Gemfile & bundle install fastlane
+        run: |
+          cat > Gemfile << EOF
+          source "https://rubygems.org"
+          gem "fastlane"
+          EOF
+          bundle install
+        shell: bash
+
       - name: Deliver to App Store Connect ✈️
         uses: maierj/fastlane-action@v3.1.0
         with:
           lane: deliver
-          use_bundle: false
         env:
-          APP_STORE_CONNECT_API_KEY_KEY_ID:               ${{ secrets.ASC_KEY_ID }}
-          APP_STORE_CONNECT_API_KEY_ISSUER_ID:            ${{ secrets.ASC_ISSUER_ID }}
+          # We are shipping the .ipa that lives in “out/AlanJayApp.ipa”
+          FASTLANE_IPA_PATH: "out/AlanJayApp.ipa"
+
+          # Tell fastlane to use our JSON API key encoded in a secret
+          APP_STORE_CONNECT_API_KEY_KEY_ID:    ${{ secrets.ASC_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          # We already injected base64‐encoded JSON into ASC_KEY_BASE64
+          # fastlane knows to decode it if _IS_KEY_CONTENT_BASE64 is "true"
           APP_STORE_CONNECT_API_KEY_IS_KEY_CONTENT_BASE64: "true"
-          APP_STORE_CONNECT_API_KEY_CONTENT:              ${{ secrets.ASC_KEY_BASE64 }}
+          APP_STORE_CONNECT_API_KEY_CONTENT:   ${{ secrets.ASC_KEY_BASE64 }}
