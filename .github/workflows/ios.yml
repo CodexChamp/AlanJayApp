@@ -140,6 +140,7 @@ jobs:
         uses: maierj/fastlane-action@v3.1.0
         with:
           lane: deliver
+          use_bundle: false
         env:
           APP_STORE_CONNECT_API_KEY_KEY_ID:               ${{ secrets.ASC_KEY_ID }}
           APP_STORE_CONNECT_API_KEY_ISSUER_ID:            ${{ secrets.ASC_ISSUER_ID }}
