@@ -203,7 +203,7 @@ jobs:
       - name: Deliver to App Store Connect ✈️
         uses: maierj/fastlane-action@v3.1.0
         with:
-          lane: deliver
+          lane: beta
         env:
           # Point Fastlane at our freshly built IPA
           FASTLANE_IPA_PATH: "out/AlanJayApp.ipa"
