@@ -109,7 +109,7 @@ jobs:
         run: security find-identity -p codesigning -v
 
       # ─────────────────────────────────────────────────────────────────────────
-      # 🔟  Setup Ruby & Bundler (for Fastlane)
+      # 🔟  Setup Ruby & Bundler
       # ─────────────────────────────────────────────────────────────────────────
       - name: Setup Ruby & Bundler
         uses: ruby/setup-ruby@v1
@@ -197,8 +197,10 @@ jobs:
 
       # ─────────────────────────────────────────────────────────────────────────
       # 1️⃣8️⃣  Write App Store Connect Key to disk
+      #
+      # We assume that secrets.ASC_KEY_BASE64 is literally the base64 of the
+      # Apple‐issued AuthKey_<KEY_ID>.p8 PEM file (no JSON wrapper).
       # ─────────────────────────────────────────────────────────────────────────
-      # We must name the file “AuthKey_<KEY_ID>.p8” and put it under ~/.appstoreconnect/private_keys/
       - name: Write App Store Connect Key to disk
         run: |
           mkdir -p ~/.appstoreconnect/private_keys
@@ -210,10 +212,10 @@ jobs:
 
       # ─────────────────────────────────────────────────────────────────────────
       # 1️⃣9️⃣  Upload .ipa to TestFlight (via altool)
+      #
+      # Notice: We do NOT pass --apiKeyPath; altool will automatically find
+      # ~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8
       # ─────────────────────────────────────────────────────────────────────────
-      # - We no longer pass “--apiKeyPath” here; altool will automatically
-      #   look for ~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8
-      # - We do need “--apiKey <KEY_ID>” and “--apiIssuer <ISSUER_ID>”
       - name: Upload .ipa to TestFlight
         run: |
           xcrun altool \
