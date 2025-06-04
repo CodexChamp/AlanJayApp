@@ -196,24 +196,30 @@ jobs:
         shell: bash
 
       # ─────────────────────────────────────────────────────────────────────────
-      # 1️⃣8️⃣  Write App Store Connect Key to disk (for altool)
+      # 1️⃣8️⃣  Write App Store Connect Key to disk
       # ─────────────────────────────────────────────────────────────────────────
+      # We must name the file “AuthKey_<KEY_ID>.p8” and put it under ~/.appstoreconnect/private_keys/
       - name: Write App Store Connect Key to disk
         run: |
-          echo "${{ secrets.ASC_KEY_BASE64 }}" | base64 --decode > asc_key.p8
-          chmod 600 asc_key.p8
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "${{ secrets.ASC_KEY_BASE64 }}" \
+            | base64 --decode \
+            > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
         shell: bash
 
       # ─────────────────────────────────────────────────────────────────────────
-      # 1️⃣9️⃣  Upload .ipa to TestFlight using altool (no Fastlane)
+      # 1️⃣9️⃣  Upload .ipa to TestFlight (via altool)
       # ─────────────────────────────────────────────────────────────────────────
+      # - We no longer pass “--apiKeyPath” here; altool will automatically
+      #   look for ~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8
+      # - We do need “--apiKey <KEY_ID>” and “--apiIssuer <ISSUER_ID>”
       - name: Upload .ipa to TestFlight
         run: |
           xcrun altool \
             --upload-app \
             -f ./out/AlanJayApp.ipa \
             --type ios \
-            --apiKeyPath asc_key.p8 \
             --apiKey "${{ secrets.ASC_KEY_ID }}" \
             --apiIssuer "${{ secrets.ASC_ISSUER_ID }}"
         shell: bash
