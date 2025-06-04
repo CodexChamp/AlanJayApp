@@ -184,13 +184,12 @@ jobs:
           ls -l out
 
       # ─────────────────────────────────────────────────────────────────────────
-      # 1️⃣7️⃣  Write App Store Connect API Key to disk (for altool)
+      # 1️⃣7️⃣  Write App Store Connect Key to disk (for altool)
       # ─────────────────────────────────────────────────────────────────────────
       - name: Write App Store Connect Key to disk
         run: |
-          mkdir -p ~/AppStoreConnect/private_keys
-          echo "${{ secrets.ASC_KEY_CONTENT }}" > \
-            ~/AppStoreConnect/private_keys/${{ secrets.ASC_KEY_ID }}.p8
+          echo "${{ secrets.ASC_KEY_BASE64 }}" | base64 --decode > asc_key.p8
+          chmod 600 asc_key.p8
         shell: bash
 
       # ─────────────────────────────────────────────────────────────────────────
@@ -201,6 +200,8 @@ jobs:
           xcrun altool \
             --upload-app \
             -f ./out/AlanJayApp.ipa \
-            --apiKey "${{ secrets.ASC_KEY_ID }}" \
+            --type ios \
+            --apiKeyPath asc_key.p8 \
             --apiIssuer "${{ secrets.ASC_ISSUER_ID }}"
         shell: bash
+
