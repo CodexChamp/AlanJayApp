@@ -7,41 +7,94 @@
 @inject CustomAuthStateProvider AuthStateProvider
 @inject HttpClient Http
 
-<style src="LoginPage.razor.css" scoped></style>
+<style>
+    .menu {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: beige;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        max-height: 100vh;
+        overflow-y: auto;
+        box-sizing: border-box;
+    }
 
-    <div class="menu">
-        <div class="logo-container">
-            @if (!string.IsNullOrEmpty(imageSource))
-            {
-                <img src="@imageSource" width="80%" />
-            }
-            else
-            {
-                <p>Loading Image...</p>
-            }
-        </div>
+    .logo-container {
+        display: grid;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        padding: 20px;
+    }
 
-        <EditForm Model="@this" OnValidSubmit="OnLoginClicked">
-            <DataAnnotationsValidator />
+    .logo {
+        width: 400px;
+        height: auto;
+        margin-right: 10px;
+    }
 
-            <div>
-                <label>Login ID:</label>
-                <InputText @bind-Value="loginID" class="form-control" autocomplete="username" />
+    th, td {
+        padding: 8px;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
 
-            </div>
+    h2 {
+        margin-top: 0;
+        text-align: center;
+    }
 
-            <div>
-                <label>Password:</label>
-                <InputText @bind-Value="Password" type="password" class="form-control" autocomplete="current-password" />
+    img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+    }
 
-            </div>
+    .login-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        gap: 10px;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 80px;
+        text-align: center;
+    }
 
-            <button class="login-button" @onclick="OnLoginClicked">Login</button>
+        .login-button:hover {
+            background-color: #0056b3;
+        }
+</style>
 
-            <p style="color: red">@ErrorMessage</p>
-        </EditForm>
+<div class="menu">
+    <div class="logo-container">
+
+        <img src="Images/alanjay.png" width="300" />
+
     </div>
 
+    <EditForm Model="@this" OnValidSubmit="OnLoginClicked">
+        <DataAnnotationsValidator />
+        <div>
+            <label>Login ID:</label>
+            <InputText @bind-Value="loginID" class="form-control" autocomplete="username" />
+        </div>
+
+        <div>
+            <label>Password:</label>
+            <InputText @bind-Value="Password" type="password" class="form-control" autocomplete="current-password" />
+        </div>
+
+        <button class="login-button" type="submit">Login</button>
+
+        <p style="color: red">@ErrorMessage</p>
+    </EditForm>
+</div>
 
 @code {
     private string loginID = "";
@@ -59,7 +112,7 @@
         {
             Console.WriteLine("[DEBUG] User already logged in. Redirecting to /Home...");
             Navigation.NavigateTo("/Home", true);
-            return; // ✅ Stops further execution
+            return;
         }
 
         try
@@ -77,17 +130,15 @@
         }
     }
 
-
     private async Task OnLoginClicked()
     {
-        Console.WriteLine("Login button clicked"); // ✅ Debug log to confirm function runs
+        Console.WriteLine("Login button clicked");
 
         var result = await AuthService.LoginAsync(loginID, Password);
         if (result != null)
         {
-            Console.WriteLine($"User authenticated: {result.loginID}"); // ✅ Debug log username
-
-            await AuthStateProvider.SetLoggedInAsync(result); // ✅ Use AuthStateProvider
+            Console.WriteLine($"User authenticated: {result.loginID}");
+            await AuthStateProvider.SetLoggedInAsync(result);
             await JS.InvokeVoidAsync("console.log", "[DEBUG] Entered GrantDatabaseAccessAsync()");
 
             await GrantDatabaseAccessAsync();
@@ -96,11 +147,10 @@
         }
         else
         {
-            Console.WriteLine("Login failed"); // ✅ Debug login failure
+            Console.WriteLine("Login failed");
             ErrorMessage = "Invalid credentials.";
         }
     }
-    private string firewallStatus = "";
 
     private async Task GrantDatabaseAccessAsync()
     {
@@ -130,12 +180,6 @@
             await JS.InvokeVoidAsync("console.log", error);
         }
     }
-
-
-
-
-
-
 
     private class UserData
     {

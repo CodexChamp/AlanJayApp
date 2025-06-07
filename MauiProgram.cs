@@ -101,9 +101,9 @@ namespace AlanJayApp
 
 #if WINDOWS
             builder.Services.AddSingleton<IFileProvider>(_ =>
-                new PhysicalFileProvider(
-                    Path.Combine(FileSystem.AppDataDirectory, "wwwroot")));
+                new PhysicalFileProvider(Path.Combine(AppContext.BaseDirectory, "wwwroot")));
 #endif
+
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();

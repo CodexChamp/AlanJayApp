@@ -6,16 +6,117 @@
 @inject AuthService AuthService
 @inject IJSRuntime JS
 @inject CustomAuthStateProvider AuthStateProvider
+
+<style>
+    :root {
+        --bg-light: #edf7ee;
+        --text-light: #222;
+        --card-bg-light: white;
+        --input-bg-light: #fdfdfd;
+        --input-border-light: #ccc;
+        --button-bg-light: #007bff;
+        --button-text-light: white;
+        --border-color-light: #bbb;
+        --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.1);
+        --bg-contrast: black;
+        --text-contrast: yellow;
+        --card-bg-contrast: #222;
+        --input-bg-contrast: black;
+        --input-border-contrast: yellow;
+        --button-bg-contrast: yellow;
+        --button-text-contrast: black;
+        --border-color-contrast: yellow;
+        --shadow-contrast: 0 4px 6px rgba(255, 255, 0, 0.5);
+        --font-small: 14px;
+        --font-medium: 16px;
+        --font-large: 18px;
+    }
+
+    body {
+        background-color: var(--bg-light);
+        color: var(--text-light);
+        font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+    }
+
+    .menu-container {
+        display: flex;
+        height: 90vh;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: var(--bg-light);
+        color: var(--text-light);
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: var(--shadow-light);
+    }
+
+    .button-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        margin-top: 20px;
+        transform: translateY(-20px);
+    }
+
+    .financial-icon, .car-icon {
+        width: 3rem;
+        height: auto;
+        vertical-align: middle;
+        filter: invert(1);
+    }
+
+    .menu-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 300px;
+        padding: 10px 20px;
+        text-align: center;
+        color: white;
+        background-color: blue;
+        font-size: inherit;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+    }
+
+    .menu-button:hover {
+        background-color: darkred;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .logo-container {
+        max-width: 100%;
+        text-align: center;
+        font-family: Arial, sans-serif;
+        padding: 10px;
+        border-radius: 5px;
+        transform: translateY(-20px);
+        background-color: inherit;
+        color: inherit;
+    }
+</style>
+
 <div class="menu-container">
     <div class="logo-container">
-        @if (imageSource is not null)
-        {
-            <img src="@imageSource" width="300" />
-        }
-        else
-        {
-            <p>Loading Image...</p>
-        }
+        <img src="Images/alanjay.png" width="300" />
+
+        
     </div>
 
     <div class="button-container">
@@ -38,28 +139,25 @@
     {
         Navigation.NavigateTo("/VinNumScan");
     }
+
     private string? imageSource;
 
     protected override async Task OnInitializedAsync()
     {
-        // ✅ Check if the user is logged in
         bool isLoggedIn = await AuthService.IsLoggedInAsync();
-
         if (!isLoggedIn)
         {
             Console.WriteLine("User not logged in. Redirecting to login page...");
             Navigation.NavigateTo("/login", forceLoad: true);
-            return; // ✅ Stop further execution
+            return;
         }
 
         try
         {
             using var stream = await FileSystem.OpenAppPackageFileAsync("alanjay.png");
-
             using var memoryStream = new MemoryStream();
             await stream.CopyToAsync(memoryStream);
             byte[] imageBytes = memoryStream.ToArray();
-
             imageSource = $"data:image/png;base64,{Convert.ToBase64String(imageBytes)}";
         }
         catch (Exception)
@@ -67,6 +165,4 @@
             Console.WriteLine("Error loading image.");
         }
     }
-
-
 }
