@@ -20,8 +20,8 @@
     <div style="text-align: center; margin-bottom: 10px;">
         <label for="locationInput" style="font-weight: bold;">Location:</label>
         <input @bind="Location" @bind:event="oninput" type="text" id="locationInput"
-        placeholder="Enter Location"
-        style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; width: 200px;" />
+               placeholder="Enter Location"
+               style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; width: 200px;" />
 
     </div>
 
@@ -60,7 +60,7 @@
     private List<CarModel> ScannedCars { get; set; } = new();
     private string Location { get; set; } = "RANCH";
     private int CarCount = 0;
-	public string InspectorName { get; set; } = "Unknown";
+    public string InspectorName { get; set; } = "Unknown";
 
     protected override async Task OnInitializedAsync()
     {
@@ -123,14 +123,14 @@
 
         // Build your payload from the scanned cars.
         var payload = ScannedCars.Select(car => new VehiclesScanned
-            {
-                VIN = car.VIN.Replace(" ", ""),
-                VehicleID = car.VehicleID,
-                DamagedInTransit = car.Damaged,
-                Location = string.IsNullOrWhiteSpace(Location) ? "RANCH" : Location,
-                Note = car.Note ?? "",
-                KeyCode = car.KeyCode ?? string.Empty
-            }).ToList();
+        {
+            VIN = car.VIN.Replace(" ", ""),
+            VehicleID = car.VehicleID,
+            DamagedInTransit = car.Damaged,
+            Location = string.IsNullOrWhiteSpace(Location) ? "RANCH" : Location,
+            Note = car.Note ?? "",
+            KeyCode = car.KeyCode ?? string.Empty
+        }).ToList();
 
         try
         {
@@ -160,7 +160,7 @@
                     Console.WriteLine($"Car: {car.VIN} already exists.");
                 }
             }
-             
+
             await DbContext.SaveChangesAsync();
             Console.WriteLine("✔ Cars saved to database successfully!");
 
@@ -179,8 +179,8 @@
     private void OpenWindowSticker()
     {
 
-         Navigation.NavigateTo($"/WindowSticker");
-    
+        Navigation.NavigateTo($"/WindowSticker");
+
     }
     private async Task UpdateCarCount()
     {
@@ -232,6 +232,6 @@
         public bool Damaged { get; set; }
         public string Location { get; set; } = string.Empty;
         public string Note { get; set; } = string.Empty;
-		public string KeyCode { get; set; } = string.Empty;
+        public string KeyCode { get; set; } = string.Empty;
     }
 }

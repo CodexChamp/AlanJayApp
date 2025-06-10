@@ -22,7 +22,7 @@
     <!-- VIN Input -->
     <div class="input-section">
         <div class="input-buttons">
-            <button @onclick="ClearVin" class="btn btn-secondary">Clear</button>
+            <button @onclick="ClearVin" class="btn btn-secondary" disabled="@IsBusy">Clear</button>
             <input @bind="VinInput"
                    @oninput="OnVinInput"
                    class="input-field"
@@ -30,7 +30,7 @@
                    placeholder="Enter or Scan VIN..."
                    @onfocus="ShowSuggestions"
                    @onblur="HideSuggestionsAfterDelay" />
-            <button @onclick="TriggerNativeScanner" class="btn btn-primary">
+            <button @onclick="TriggerNativeScanner" class="btn btn-primary" disabled="@IsBusy">
                 <img src="Images/qrcode.png" alt="QR Code" class="qr-icon" />
             </button>
         </div>

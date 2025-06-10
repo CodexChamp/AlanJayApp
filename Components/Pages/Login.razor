@@ -5,41 +5,42 @@
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
 @inject CustomAuthStateProvider AuthStateProvider
+@inject HttpClient Http
 
 <style src="LoginPage.razor.css" scoped></style>
 
-    <div class="menu">
-        <div class="logo-container">
-            @if (!string.IsNullOrEmpty(imageSource))
-            {
-                <img src="@imageSource" width="80%" />
-            }
-            else
-            {
-                <p>Loading Image...</p>
-            }
+<div class="menu">
+    <div class="logo-container">
+        @if (!string.IsNullOrEmpty(imageSource))
+        {
+            <img src="@imageSource" width="80%" />
+        }
+        else
+        {
+            <p>Loading Image...</p>
+        }
+    </div>
+
+    <EditForm Model="@this" OnValidSubmit="OnLoginClicked">
+        <DataAnnotationsValidator />
+
+        <div>
+            <label>Login ID:</label>
+            <InputText @bind-Value="loginID" class="form-control" autocomplete="username" />
+
         </div>
 
-        <EditForm Model="@this" OnValidSubmit="OnLoginClicked">
-            <DataAnnotationsValidator />
+        <div>
+            <label>Password:</label>
+            <InputText @bind-Value="Password" type="password" class="form-control" autocomplete="current-password" />
 
-            <div>
-                <label>Login ID:</label>
-                <InputText @bind-Value="loginID" class="form-control" autocomplete="username" />
+        </div>
 
-            </div>
+        <button class="login-button" @onclick="OnLoginClicked">Login</button>
 
-            <div>
-                <label>Password:</label>
-                <InputText @bind-Value="Password" type="password" class="form-control" autocomplete="current-password" />
-
-            </div>
-
-            <button class="login-button" @onclick="OnLoginClicked">Login</button>
-
-            <p style="color: red">@ErrorMessage</p>
-        </EditForm>
-    </div>
+        <p style="color: red">@ErrorMessage</p>
+    </EditForm>
+</div>
 
 
 @code {

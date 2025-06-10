@@ -1,375 +1,382 @@
-﻿
+﻿﻿
 @media (orientation: portrait) { /* Apply Light Mode */
 
-    :root {
-        font-size: 2vw;
-    }
+    : root
 
-    body {
-        font-size: calc(1rem + 1vh);
-    }
+{
+    font-size: 2vw;
+}
 
-    /* Default container styling */
-    #vinContainer {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        background-color: #e8f5e9; /* Muted green */
-        padding: 1rem;
-        box-sizing: border-box;
-        width: 100%;
-        max-width: 75rem;
-        border-radius: 0.5rem;
-        border-width: 2px;
-    }
+body {
+    font-size: calc(1rem + 1vh);
+}
 
-    /* Input Section */
-    .input-section {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.75rem;
-        width: 100%;
-        max-width: 500px;
-    }
+/* Default container styling */
+#vinContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #e8f5e9; /* Muted green */
+    padding: 1rem;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 100vh; /* Ensures full height for scrolling */
+    overflow-y: auto;
+    max-width: 75rem;
+    border-radius: 0.5rem;
+    border-width: 2px;
+}
 
-    .input-group {
-        display: flex;
-        align-items: center;
-        gap: 10px; /* Space between elements */
-    }
+/* Input Section */
+.input-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 500px;
+}
 
-    .input-buttons {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        width: 100%;
-        justify-content: center;
-        flex-shrink: 0; /* Prevent them from getting squished */
-        height: 2.5rem;
-        min-width: 50px;
-    }
+.input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between elements */
+}
 
-    .input-field {
-        flex-grow: 1;
-        height: 3.5rem;
-        min-width: 200px;
-        box-sizing: border-box;
-    }
-    /* Ensure QR button is correctly sized */
-    .qr-button img {
-        width: 24px;
-        height: 24px;
-    }
-    .btn {
-        white-space: nowrap; /* Prevents buttons from breaking onto new lines */
-    }
+.input-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    justify-content: center;
+    flex-shrink: 0; /* Prevent them from getting squished */
+    height: 2.5rem;
+    min-width: 50px;
+}
 
-    .scan-button {
-        height: 1rem;
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 0.5rem;
-    }
+.input-field {
+    flex-grow: 1;
+    height: 3.5rem;
+    min-width: 200px;
+    box-sizing: border-box;
+}
+/* Ensure QR button is correctly sized */
+.qr-button img {
+    width: 24px;
+    height: 24px;
+}
 
-        .scan-button i {
-            font-size: 1.5rem;
-        }
+.btn {
+    white-space: nowrap; /* Prevents buttons from breaking onto new lines */
+}
 
-    /* Dropdown Menu */
-    .dropdown {
-        position: relative;
-        width: 100%; /* Make dropdown the same width as the input field */
-    }
+.scan-button {
+    height: 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+}
 
-    .dropdown-content {
-        display: none;
-        position: absolute;
-        background-color: white;
-        border: 1px solid #ccc; /* Ensure the dropdown content matches the width of the dropdown */
-        z-index: 10;
-    }
-
-    .dropbtn {
-        background: none;
-        border: none;
-        height: 2rem;
+    .scan-button i {
         font-size: 1.5rem;
-        cursor: pointer;
     }
 
-    .dropdown:hover .dropdown-content {
-        display: block;
+/* Dropdown Menu */
+.dropdown {
+    position: relative;
+    width: 100%; /* Make dropdown the same width as the input field */
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ccc; /* Ensure the dropdown content matches the width of the dropdown */
+    z-index: 10;
+}
+
+.dropbtn {
+    background: none;
+    border: none;
+    height: 2rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.carCountBadge {
+    background-color: red;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 50%;
+    font-size: 0.9rem;
+}
+
+/* Suggestions Dropdown */
+.suggestions-container {
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+    max-height: 200px;
+    overflow-y: auto;
+    white-space: nowrap;
+    width: 100%; /* Ensures the dropdown matches the input section width */
+    margin-top: 0.5rem; /* Small gap between input/buttons and suggestions */
+}
+
+.input-wrapper {
+    position: relative; /* establishes the positioning context */
+    width: 100%;
+    margin: 0 auto;
+}
+
+.suggestion-item {
+    padding: 10px;
+    cursor: pointer;
+    font-size: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+    .suggestion-item:hover {
+        background-color: #f0f0f0;
     }
 
-    .carCountBadge {
-        background-color: red;
-        color: white;
-        padding: 0.25rem 0.5rem;
-        border-radius: 50%;
-        font-size: 0.9rem;
+
+
+
+/* Scanner Container */
+#scannerContainer {
+    display: flex !important;
+    position: fixed;
+    background: rgba(0, 0, 0, 0.8);
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    align-items: center;
+    justify-content: center;
+}
+/* Scanner Reader */
+#reader {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.close-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 2rem;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+}
+
+/* Vehicle Details Section */
+#vehicleDetails {
+    width: 100%;
+    max-width: 500px;
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+    #vehicleDetails p {
+        margin: 0.5rem 0;
     }
 
-    /* Suggestions Dropdown */
+/* Damaged Checkbox */
+input[type="checkbox"] {
+    margin-right: 0.5rem;
+}
+
+.form-control {
+    display: none;
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping */
+    gap: 0.5rem;
+    justify-content: center;
+    width: 100%; /* Take full width of parent */
+    box-sizing: border-box;
+    margin-top: 1rem;
+}
+
+
+.action-button {
+    flex: 1;
+    padding: 0.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 5px;
+    background-color: #28a745;
+    color: white;
+}
+
+.action-button2 {
+    margin-left: 10px;
+    padding: 0.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 5px;
+    border-color: aquamarine;
+    background-color: blue;
+    color: white;
+}
+
+.action-button:hover {
+    background-color: #218838;
+}
+
+/* Conditional Background Colors */
+[data-location="NA"] {
+    background-color: #d3d3d3 !important; /* Grey for unknown location */
+}
+
+[data-location="known"] {
+    background-color: #e6f9e6 !important; /* Green for known locations */
+}
+
+
+.form-control {
+    display: block; /* Ensure it is not hidden */
+    position: relative; /* Keeps it within the flow */
+    z-index: 11; /* Ensure it's above other elements */
+    width: 100%; /* Adjust for responsiveness */
+    max-width: 400px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-top: 5px; /* Add space below checkbox */
+}
+/* High Contrast Mode */
+.high-contrast-mode {
+    --bg-color: #000000; /* Pure Black */
+    --text-color: #ffdd00; /* Bright Yellow */
+    --table-header: #ffdd00; /* Bright Yellow */
+    --table-row-dark: #222222; /* Dark Gray */
+    --table-row-light: #444444; /* Slightly Lighter Gray */
+}
+
+    /* Apply High Contrast Globally */
+    .high-contrast-mode body,
+    .high-contrast-mode .container,
+    .high-contrast-mode .modal-content,
     .suggestions-container {
-        background: white;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-        z-index: 100;
-        max-height: 200px;
-        overflow-y: auto;
-        white-space: nowrap;
-        width: 100%; /* Ensures the dropdown matches the input section width */
-        margin-top: 0.5rem; /* Small gap between input/buttons and suggestions */
-    }
-    .input-wrapper {
-        position: relative; /* establishes the positioning context */
-        width: 100%;
-        margin: 0 auto; 
+        background-color: var(--bg-color) !important;
+        color: var(--text-color) !important;
     }
 
-    .suggestion-item {
-        padding: 10px;
-        cursor: pointer;
-        font-size: 1rem;
-        border-bottom: 1px solid #eee;
+    /* Tables */
+    .high-contrast-mode .table {
+        background-color: var(--bg-color) !important;
+        color: var(--text-color) !important;
+        border-color: var(--text-color) !important;
     }
 
-        .suggestion-item:hover {
-            background-color: #f0f0f0;
+        .high-contrast-mode .table th {
+            background-color: var(--table-header) !important; /* Bright Yellow */
+            color: black !important;
         }
 
-
-
-
-    /* Scanner Container */
-    #scannerContainer {
-        display: flex !important;
-        position: fixed;
-        background: rgba(0, 0, 0, 0.8);
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
-        align-items: center;
-        justify-content: center;
-    }
-    /* Scanner Reader */
-    #reader {
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-    }
-
-    .close-button {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        font-size: 2rem;
-        background: none;
-        border: none;
-        color: white;
-        cursor: pointer;
-    }
-
-    /* Vehicle Details Section */
-    #vehicleDetails {
-        width: 100%;
-        max-width: 500px;
-        margin-top: 1rem;
-        padding: 1rem;
-        background-color: white;
-        border-radius: 5px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-        #vehicleDetails p {
-            margin: 0.5rem 0;
+        .high-contrast-mode .table tr:nth-child(even) {
+            background-color: var(--table-row-dark) !important; /* Dark Gray */
         }
 
-    /* Damaged Checkbox */
-    input[type="checkbox"] {
-        margin-right: 0.5rem;
-    }
-
-    .form-control {
-        display: none;
-        width: 100%;
-        padding: 0.5rem;
-        margin-top: 0.5rem;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-    }
-
-    /* Action Buttons */
-    .action-buttons {
-        display: grid;
-        /* two columns of equal width */
-        grid-template-columns: repeat(2, 1fr);
-        /* small gap between rows and columns */
-        gap: 0.5rem;
-        /* center it if you like */
-        justify-items: stretch;
-        margin-top: 1rem;
-    }
-
-    .action-button {
-        flex: 1;
-        padding: 0.5rem;
-        font-size: 1rem;
-        cursor: pointer;
-        border-radius: 5px;
-        background-color: #28a745;
-        color: white;
-    }
-    .action-button2 {
-        margin-left: 10px;
-        padding: 0.5rem;
-        font-size: 1rem;
-        cursor: pointer;
-        border-radius: 5px;
-        border-color: aquamarine;
-        background-color: blue;
-        color: white;
-    }
-
-        .action-button:hover {
-            background-color: #218838;
+        .high-contrast-mode .table tr:nth-child(odd) {
+            background-color: var(--table-row-light) !important; /* Slightly Lighter Gray */
         }
 
-    /* Conditional Background Colors */
-    [data-location="NA"] {
-        background-color: #d3d3d3 !important; /* Grey for unknown location */
-    }
-
-    [data-location="known"] {
-        background-color: #e6f9e6 !important; /* Green for known locations */
-    }
-
-
-    .form-control {
-        display: block; /* Ensure it is not hidden */
-        position: relative; /* Keeps it within the flow */
-        z-index: 11; /* Ensure it's above other elements */
-        width: 100%; /* Adjust for responsiveness */
-        max-width: 400px;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        margin-top: 5px; /* Add space below checkbox */
-    }
-    /* High Contrast Mode */
-    .high-contrast-mode {
-        --bg-color: #000000; /* Pure Black */
-        --text-color: #ffdd00; /* Bright Yellow */
-        --table-header: #ffdd00; /* Bright Yellow */
-        --table-row-dark: #222222; /* Dark Gray */
-        --table-row-light: #444444; /* Slightly Lighter Gray */
-    }
-
-        /* Apply High Contrast Globally */
-        .high-contrast-mode body,
-        .high-contrast-mode .container,
-        .high-contrast-mode .modal-content,
-        .suggestions-container {
-            background-color: var(--bg-color) !important;
-            color: var(--text-color) !important;
-        }
-
-        /* Tables */
-        .high-contrast-mode .table {
-            background-color: var(--bg-color) !important;
-            color: var(--text-color) !important;
-            border-color: var(--text-color) !important;
-        }
-
-            .high-contrast-mode .table th {
-                background-color: var(--table-header) !important; /* Bright Yellow */
-                color: black !important;
-            }
-
-            .high-contrast-mode .table tr:nth-child(even) {
-                background-color: var(--table-row-dark) !important; /* Dark Gray */
-            }
-
-            .high-contrast-mode .table tr:nth-child(odd) {
-                background-color: var(--table-row-light) !important; /* Slightly Lighter Gray */
-            }
-
-            /* Force Text to Always Be Yellow */
-            .high-contrast-mode .table td,
-            .high-contrast-mode .table th,
-            .high-contrast-mode p,
-            .high-contrast-mode label,
-            .high-contrast-mode span,
-            .high-contrast-mode a {
-                color: var(--text-color) !important;
-            }
-
-        /* Buttons */
-        .high-contrast-mode .icon-button,
-        .high-contrast-mode .btn {
-            background-color: var(--text-color) !important; /* Bright Yellow */
-            color: black !important; /* High contrast */
-            border: 2px solid var(--text-color);
-        }
-
-            .high-contrast-mode .icon-button:hover,
-            .high-contrast-mode .btn:hover {
-                background-color: #222222 !important;
-                color: var(--text-color) !important;
-            }
-
-        /* Inputs */
-        .high-contrast-mode input,
-        .high-contrast-mode select,
-        .high-contrast-mode textarea {
-            background-color: black !important;
-            color: var(--text-color) !important;
-            border: 1px solid var(--text-color) !important;
-        }
-
-        /* Ensure modal backgrounds are black */
-        .high-contrast-mode .modal-content {
-            background-color: black !important;
-            color: var(--text-color) !important;
-        }
-
-        /* High Contrast Links */
+        /* Force Text to Always Be Yellow */
+        .high-contrast-mode .table td,
+        .high-contrast-mode .table th,
+        .high-contrast-mode p,
+        .high-contrast-mode label,
+        .high-contrast-mode span,
         .high-contrast-mode a {
             color: var(--text-color) !important;
-            text-decoration: underline;
         }
 
-            .high-contrast-mode a:hover {
-                color: white !important;
-            }
-        /* High Contrast Mode */
-        .high-contrast-mode #vehicleDetails {
-            background-color: #4b0082 !important; /* Dark Purple */
-            color: #ffdd00 !important; /* Bright Yellow Text */
-            border: 2px solid #ffdd00 !important;
-        }
-
-    /* Dark Mode */
-    .dark-mode #vehicleDetails {
-        background-color: #222222 !important; /* Dark Gray */
-        color: white !important;
-        border: 1px solid white !important;
+    /* Buttons */
+    .high-contrast-mode .icon-button,
+    .high-contrast-mode .btn {
+        background-color: var(--text-color) !important; /* Bright Yellow */
+        color: black !important; /* High contrast */
+        border: 2px solid var(--text-color);
     }
 
-        /* Ensure all text inside is visible */
-        .high-contrast-mode #vehicleDetails p,
-        .dark-mode #vehicleDetails p,
-        .high-contrast-mode #vehicleDetails span,
-        .dark-mode #vehicleDetails span {
-            color: inherit !important;
+        .high-contrast-mode .icon-button:hover,
+        .high-contrast-mode .btn:hover {
+            background-color: #222222 !important;
+            color: var(--text-color) !important;
         }
 
+    /* Inputs */
+    .high-contrast-mode input,
+    .high-contrast-mode select,
+    .high-contrast-mode textarea {
+        background-color: black !important;
+        color: var(--text-color) !important;
+        border: 1px solid var(--text-color) !important;
+    }
+
+    /* Ensure modal backgrounds are black */
+    .high-contrast-mode .modal-content {
+        background-color: black !important;
+        color: var(--text-color) !important;
+    }
+
+    /* High Contrast Links */
+    .high-contrast-mode a {
+        color: var(--text-color) !important;
+        text-decoration: underline;
+    }
+
+        .high-contrast-mode a:hover {
+            color: white !important;
+        }
+    /* High Contrast Mode */
+    .high-contrast-mode #vehicleDetails {
+        background-color: #4b0082 !important; /* Dark Purple */
+        color: #ffdd00 !important; /* Bright Yellow Text */
+        border: 2px solid #ffdd00 !important;
+    }
+
+/* Dark Mode */
+.dark-mode #vehicleDetails {
+    background-color: #222222 !important; /* Dark Gray */
+    color: white !important;
+    border: 1px solid white !important;
+}
+
+    /* Ensure all text inside is visible */
+    .high-contrast-mode #vehicleDetails p,
+    .dark-mode #vehicleDetails p,
+    .high-contrast-mode #vehicleDetails span,
+    .dark-mode #vehicleDetails span {
+        color: inherit !important;
+    }
 
 }
+
 .qr-icon {
     width: 20px;
     height: 20px;
@@ -377,45 +384,45 @@
     vertical-align: middle;
 }
 
-    :root {
-        font-size: 2vw;
-    }
+:root {
+    font-size: 2vw;
+}
 
-    body {
-        font-size: calc(1rem + 1vh);
-    }
+body {
+    font-size: calc(1rem + 1vh);
+}
 
-    /* Default container styling */
-    #vinContainer {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        background-color: #e8f5e9; /* Muted green */
-        padding: 1rem;
-        box-sizing: border-box;
-        width: 100%;
-        max-width: 75rem;
-        border-radius: 0.5rem;
-        border-width: 2px;
-    }
+/* Default container styling */
+#vinContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #e8f5e9; /* Muted green */
+    padding: 1rem;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 75rem;
+    border-radius: 0.5rem;
+    border-width: 2px;
+}
 
-    /* Input Section */
-    .input-section {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
-        width: 100%;
-        max-width: 500px;
-        padding: 0rem;
-        border-radius: 5px;
-    }
+/* Input Section */
+.input-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 500px;
+    padding: 0rem;
+    border-radius: 5px;
+}
 
-    .input-group {
-        display: flex;
-        align-items: center;
-        gap: 10px; /* Space between elements */
-    }
+.input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between elements */
+}
 
 .input-buttons {
     display: flex;
@@ -432,156 +439,159 @@
     min-width: 200px; /* Prevent it from getting too small */
 }
 
-    .btn {
-        
-        white-space: nowrap; /* Prevents buttons from breaking onto new lines */
-    }
+.btn {
+    white-space: nowrap; /* Prevents buttons from breaking onto new lines */
+}
 
-    .scan-button {
-        height: 1rem;
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 0.5rem;
-    }
+.scan-button {
+    height: 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+}
 
-        .scan-button i {
-            font-size: 1.5rem;
-        }
-
-    /* Dropdown Menu */
-    .dropdown {
-        position: relative;
-        width: 100%; /* Make dropdown the same width as the input field */
-    }
-
-    .dropdown-content {
-        display: none;
-        position: absolute;
-        background-color: white;
-        border: 1px solid #ccc; /* Ensure the dropdown content matches the width of the dropdown */
-        z-index: 10;
-    }
-
-    .dropbtn {
-        background: none;
-        border: none;
-        height: 2rem;
+    .scan-button i {
         font-size: 1.5rem;
-        cursor: pointer;
     }
 
-    .dropdown:hover .dropdown-content {
-        display: block;
+/* Dropdown Menu */
+.dropdown {
+    position: relative;
+    width: 100%; /* Make dropdown the same width as the input field */
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ccc; /* Ensure the dropdown content matches the width of the dropdown */
+    z-index: 10;
+}
+
+.dropbtn {
+    background: none;
+    border: none;
+    height: 2rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.carCountBadge {
+    background-color: red;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 50%;
+    font-size: 0.9rem;
+}
+
+.suggestions-container {
+    position: relative;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+    max-height: 200px;
+    overflow-y: auto;
+    min-width: fit-content; /* Ensures it doesn't shrink */
+    white-space: nowrap;
+    /* Aligns the left side with the parent container */
+    width: auto; /* Allow dynamic resizing */
+    margin-top: 0;
+    margin-left: 4.5rem;
+}
+
+
+.suggestion-item {
+    padding: 10px;
+    cursor: pointer;
+    font-size: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+    .suggestion-item:hover {
+        background-color: #f0f0f0;
     }
 
-    .carCountBadge {
-        background-color: red;
-        color: white;
-        padding: 0.25rem 0.5rem;
-        border-radius: 50%;
-        font-size: 0.9rem;
+
+
+
+/* Scanner Container */
+#scannerContainer {
+    display: flex !important;
+    position: fixed;
+    background: rgba(0, 0, 0, 0.8);
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    align-items: center;
+    justify-content: center;
+}
+/* Scanner Reader */
+#reader {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.close-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 2rem;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+}
+
+/* Vehicle Details Section */
+#vehicleDetails {
+    width: 100%;
+    max-width: 500px;
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+    #vehicleDetails p {
+        margin: 0.5rem 0;
     }
 
-    .suggestions-container {
-        position: relative;
-        background: white;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-        z-index: 100;
-        max-height: 200px;
-        overflow-y: auto;
-        min-width: fit-content; /* Ensures it doesn't shrink */
-        white-space: nowrap;
-        /* Aligns the left side with the parent container */
-        width: auto; /* Allow dynamic resizing */
-        margin-top: 0;
-        margin-left: 4.5rem;
-    }
+/* Damaged Checkbox */
+input[type="checkbox"] {
+    margin-right: 0.5rem;
+}
 
+.form-control {
+    display: none;
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
 
-    .suggestion-item {
-        padding: 10px;
-        cursor: pointer;
-        font-size: 1rem;
-        border-bottom: 1px solid #eee;
-    }
-
-        .suggestion-item:hover {
-            background-color: #f0f0f0;
-        }
-
-
-
-
-    /* Scanner Container */
-    #scannerContainer {
-        display: flex !important;
-        position: fixed;
-        background: rgba(0, 0, 0, 0.8);
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
-        align-items: center;
-        justify-content: center;
-    }
-    /* Scanner Reader */
-    #reader {
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-    }
-
-    .close-button {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        font-size: 2rem;
-        background: none;
-        border: none;
-        color: white;
-        cursor: pointer;
-    }
-
-    /* Vehicle Details Section */
-    #vehicleDetails {
-        width: 100%;
-        max-width: 500px;
-        margin-top: 1rem;
-        padding: 1rem;
-        background-color: white;
-        border-radius: 5px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-        #vehicleDetails p {
-            margin: 0.5rem 0;
-        }
-
-    /* Damaged Checkbox */
-    input[type="checkbox"] {
-        margin-right: 0.5rem;
-    }
-
-    .form-control {
-        display: none;
-        width: 100%;
-        padding: 0.5rem;
-        margin-top: 0.5rem;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-    }
-
-    /* Action Buttons */
+/* Action Buttons */
 /* make the button row tighter */
 .action-buttons {
     display: flex;
-    gap: 0.2rem; /* less space between buttons */
+    flex-wrap: wrap; /* Allow wrapping */
+    gap: 0.5rem;
     justify-content: center;
+    width: 100%; /* Take full width of parent */
+    box-sizing: border-box;
     margin-top: 1rem;
 }
+
 
 /* common styling for both buttons */
 .action-button,
@@ -615,143 +625,144 @@
         background-color: #5a6268;
     }
 
-    /* Conditional Background Colors */
-    [data-location="NA"] {
-        background-color: #d3d3d3 !important; /* Grey for unknown location */
-    }
+/* Conditional Background Colors */
+[data-location="NA"] {
+    background-color: #d3d3d3 !important; /* Grey for unknown location */
+}
 
-    [data-location="known"] {
-        background-color: #e6f9e6 !important; /* Green for known locations */
-    }
-
-
+[data-location="known"] {
+    background-color: #e6f9e6 !important; /* Green for known locations */
+}
 
 
 
 
+
+
+.suggestions-container {
+    margin-top: 0;
+    position: relative; /* Keeps it inside parent container */
+}
+
+.form-control {
+    display: block; /* Ensure it is not hidden */
+    position: relative; /* Keeps it within the flow */
+    z-index: 11; /* Ensure it's above other elements */
+    width: 100%; /* Adjust for responsiveness */
+    max-width: 400px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-top: 5px; /* Add space below checkbox */
+}
+/* High Contrast Mode */
+.high-contrast-mode {
+    --bg-color: #000000; /* Pure Black */
+    --text-color: #ffdd00; /* Bright Yellow */
+    --table-header: #ffdd00; /* Bright Yellow */
+    --table-row-dark: #222222; /* Dark Gray */
+    --table-row-light: #444444; /* Slightly Lighter Gray */
+}
+
+    /* Apply High Contrast Globally */
+    .high-contrast-mode body,
+    .high-contrast-mode .container,
+    .high-contrast-mode .modal-content,
     .suggestions-container {
-        margin-top: 0;
-        position: relative; /* Keeps it inside parent container */
+        background-color: var(--bg-color) !important;
+        color: var(--text-color) !important;
     }
 
-    .form-control {
-        display: block; /* Ensure it is not hidden */
-        position: relative; /* Keeps it within the flow */
-        z-index: 11; /* Ensure it's above other elements */
-        width: 100%; /* Adjust for responsiveness */
-        max-width: 400px;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        margin-top: 5px; /* Add space below checkbox */
-    }
-    /* High Contrast Mode */
-    .high-contrast-mode {
-        --bg-color: #000000; /* Pure Black */
-        --text-color: #ffdd00; /* Bright Yellow */
-        --table-header: #ffdd00; /* Bright Yellow */
-        --table-row-dark: #222222; /* Dark Gray */
-        --table-row-light: #444444; /* Slightly Lighter Gray */
+    /* Tables */
+    .high-contrast-mode .table {
+        background-color: var(--bg-color) !important;
+        color: var(--text-color) !important;
+        border-color: var(--text-color) !important;
     }
 
-        /* Apply High Contrast Globally */
-        .high-contrast-mode body,
-        .high-contrast-mode .container,
-        .high-contrast-mode .modal-content,
-        .suggestions-container {
-            background-color: var(--bg-color) !important;
-            color: var(--text-color) !important;
+        .high-contrast-mode .table th {
+            background-color: var(--table-header) !important; /* Bright Yellow */
+            color: black !important;
         }
 
-        /* Tables */
-        .high-contrast-mode .table {
-            background-color: var(--bg-color) !important;
-            color: var(--text-color) !important;
-            border-color: var(--text-color) !important;
+        .high-contrast-mode .table tr:nth-child(even) {
+            background-color: var(--table-row-dark) !important; /* Dark Gray */
         }
 
-            .high-contrast-mode .table th {
-                background-color: var(--table-header) !important; /* Bright Yellow */
-                color: black !important;
-            }
-
-            .high-contrast-mode .table tr:nth-child(even) {
-                background-color: var(--table-row-dark) !important; /* Dark Gray */
-            }
-
-            .high-contrast-mode .table tr:nth-child(odd) {
-                background-color: var(--table-row-light) !important; /* Slightly Lighter Gray */
-            }
-
-            /* Force Text to Always Be Yellow */
-            .high-contrast-mode .table td,
-            .high-contrast-mode .table th,
-            .high-contrast-mode p,
-            .high-contrast-mode label,
-            .high-contrast-mode span,
-            .high-contrast-mode a {
-                color: var(--text-color) !important;
-            }
-
-        /* Buttons */
-        .high-contrast-mode .icon-button,
-        .high-contrast-mode .btn {
-            background-color: var(--text-color) !important; /* Bright Yellow */
-            color: black !important; /* High contrast */
-            border: 2px solid var(--text-color);
+        .high-contrast-mode .table tr:nth-child(odd) {
+            background-color: var(--table-row-light) !important; /* Slightly Lighter Gray */
         }
 
-            .high-contrast-mode .icon-button:hover,
-            .high-contrast-mode .btn:hover {
-                background-color: #222222 !important;
-                color: var(--text-color) !important;
-            }
-
-        /* Inputs */
-        .high-contrast-mode input,
-        .high-contrast-mode select,
-        .high-contrast-mode textarea {
-            background-color: black !important;
-            color: var(--text-color) !important;
-            border: 1px solid var(--text-color) !important;
-        }
-
-        /* Ensure modal backgrounds are black */
-        .high-contrast-mode .modal-content {
-            background-color: black !important;
-            color: var(--text-color) !important;
-        }
-
-        /* High Contrast Links */
+        /* Force Text to Always Be Yellow */
+        .high-contrast-mode .table td,
+        .high-contrast-mode .table th,
+        .high-contrast-mode p,
+        .high-contrast-mode label,
+        .high-contrast-mode span,
         .high-contrast-mode a {
             color: var(--text-color) !important;
-            text-decoration: underline;
         }
 
-            .high-contrast-mode a:hover {
-                color: white !important;
-            }
-        /* High Contrast Mode */
-        .high-contrast-mode #vehicleDetails {
-            background-color: #4b0082 !important; /* Dark Purple */
-            color: #ffdd00 !important; /* Bright Yellow Text */
-            border: 2px solid #ffdd00 !important;
-        }
-
-    /* Dark Mode */
-    .dark-mode #vehicleDetails {
-        background-color: #222222 !important; /* Dark Gray */
-        color: white !important;
-        border: 1px solid white !important;
+    /* Buttons */
+    .high-contrast-mode .icon-button,
+    .high-contrast-mode .btn {
+        background-color: var(--text-color) !important; /* Bright Yellow */
+        color: black !important; /* High contrast */
+        border: 2px solid var(--text-color);
     }
 
-        /* Ensure all text inside is visible */
-        .high-contrast-mode #vehicleDetails p,
-        .dark-mode #vehicleDetails p,
-        .high-contrast-mode #vehicleDetails span,
-        .dark-mode #vehicleDetails span {
-            color: inherit !important;
+        .high-contrast-mode .icon-button:hover,
+        .high-contrast-mode .btn:hover {
+            background-color: #222222 !important;
+            color: var(--text-color) !important;
         }
+
+    /* Inputs */
+    .high-contrast-mode input,
+    .high-contrast-mode select,
+    .high-contrast-mode textarea {
+        background-color: black !important;
+        color: var(--text-color) !important;
+        border: 1px solid var(--text-color) !important;
+    }
+
+    /* Ensure modal backgrounds are black */
+    .high-contrast-mode .modal-content {
+        background-color: black !important;
+        color: var(--text-color) !important;
+    }
+
+    /* High Contrast Links */
+    .high-contrast-mode a {
+        color: var(--text-color) !important;
+        text-decoration: underline;
+    }
+
+        .high-contrast-mode a:hover {
+            color: white !important;
+        }
+    /* High Contrast Mode */
+    .high-contrast-mode #vehicleDetails {
+        background-color: #4b0082 !important; /* Dark Purple */
+        color: #ffdd00 !important; /* Bright Yellow Text */
+        border: 2px solid #ffdd00 !important;
+    }
+
+/* Dark Mode */
+.dark-mode #vehicleDetails {
+    background-color: #222222 !important; /* Dark Gray */
+    color: white !important;
+    border: 1px solid white !important;
+}
+
+    /* Ensure all text inside is visible */
+    .high-contrast-mode #vehicleDetails p,
+    .dark-mode #vehicleDetails p,
+    .high-contrast-mode #vehicleDetails span,
+    .dark-mode #vehicleDetails span {
+        color: inherit !important;
+    }
+
 .input-wrapper {
     position: relative; /* establishes the positioning context */
     width: 100%;
