@@ -9,7 +9,7 @@ namespace AlanJayApp.Data
     public class AppSettings
     {
         public string AppName { get; set; } = "Alan Jay Fleet";
-        public string Version { get; set; } = "1.0.0";
+        public string Version { get; set; } = "1.0.6";
         public string Theme { get; set; } = "Dark";
         public string FontSize { get; set; } = "Medium";
         public string AccentColor { get; set; } = "#007bff";
