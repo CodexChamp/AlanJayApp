@@ -1,158 +1,152 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
-	<PropertyGroup>
-		<TargetFrameworks>net8.0-android;net8.0-ios;net8.0-maccatalyst</TargetFrameworks>
-		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net8.0-windows10.0.19041.0</TargetFrameworks>
-		<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
-		<!-- <TargetFrameworks>$(TargetFrameworks);net8.0-tizen</TargetFrameworks> -->
+  <PropertyGroup>
+    <TargetFrameworks>net8.0-android;net8.0-ios;net8.0-maccatalyst</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">
+      $(TargetFrameworks);net8.0-windows10.0.19041.0
+    </TargetFrameworks>
 
-		<!-- Note for MacCatalyst:
-            The default runtime is maccatalyst-x64, except in Release config, in which case the default is maccatalyst-x64;maccatalyst-arm64.
-            When specifying both architectures, use the plural <RuntimeIdentifiers> instead of the singular <RuntimeIdentifier>.
-            The Mac App Store will NOT accept apps with ONLY maccatalyst-arm64 indicated;
-            either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
-		<!-- For example: <RuntimeIdentifiers>maccatalyst-x64;maccatalyst-arm64</RuntimeIdentifiers> -->
-		<EnableCompressedStaticFiles>false</EnableCompressedStaticFiles>
-		<OutputType>Exe</OutputType>
-		<RootNamespace>AlanJayApp</RootNamespace>
-		<UseMaui>true</UseMaui>
-		<SingleProject>true</SingleProject>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<EnableDefaultCssItems>false</EnableDefaultCssItems>
-		<Nullable>enable</Nullable>
+    <EnableCompressedStaticFiles>false</EnableCompressedStaticFiles>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>AlanJayApp</RootNamespace>
+    <UseMaui>true</UseMaui>
+    <SingleProject>true</SingleProject>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableDefaultCssItems>false</EnableDefaultCssItems>
+    <Nullable>enable</Nullable>
 
-		<!-- Display name -->
-		<ApplicationTitle>AlanJayFleet</ApplicationTitle>
+    <!-- App metadata -->
+    <ApplicationTitle>AlanJayFleet</ApplicationTitle>
+    <ApplicationId>com.companyname.alanjayapp</ApplicationId>
+    <ApplicationDisplayVersion>1.0.6</ApplicationDisplayVersion>
+    <ApplicationVersion>6</ApplicationVersion>
 
-		<!-- App Identifier -->
-		<ApplicationId>com.companyname.alanjayapp</ApplicationId>
+    <!-- Platform support -->
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">14.2</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">14.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
+    <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+  </PropertyGroup>
 
-		<!-- Versions -->
-		<ApplicationDisplayVersion>1.0.6</ApplicationDisplayVersion>
-		<ApplicationVersion>6</ApplicationVersion>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <AndroidKeyStore>True</AndroidKeyStore>
+    <AndroidSigningKeyStore>MyNewKey.jks</AndroidSigningKeyStore>
+    <AndroidSigningStorePass>122221</AndroidSigningStorePass>
+    <AndroidSigningKeyAlias>MyAlias</AndroidSigningKeyAlias>
+    <AndroidSigningKeyPass>122221</AndroidSigningKeyPass>
+  </PropertyGroup>
 
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">14.2</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">14.0</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
-		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
-		<!--<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>-->
-	</PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-android|AnyCPU'">
+    <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
+  </PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)'=='Release'">
-		<AndroidKeyStore>True</AndroidKeyStore>
-		<AndroidSigningKeyStore>MyNewKey.jks</AndroidSigningKeyStore>
-		<AndroidSigningStorePass>122221</AndroidSigningStorePass>
-		<AndroidSigningKeyAlias>MyAlias</AndroidSigningKeyAlias>
-		<AndroidSigningKeyPass>122221</AndroidSigningKeyPass>
-	</PropertyGroup>
+  <ItemGroup>
+    <!-- ✅ Modern MAUI-style icon using SVG -->
+    <MauiIcon Include="Resources/AppIcon/appicon.svg" />
 
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-android|AnyCPU'">
-		<EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
-	</PropertyGroup>
+  </ItemGroup>
 
-	<ItemGroup>
-		<!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\icon.png"/>
-		<!-- Splash Screen -->
-		<MauiSplashScreen Include="wwwroot\Images\loading_screen.png" Color="fefeff" />
+  <ItemGroup>
+    <!-- Splash screen -->
+    <MauiSplashScreen Include="wwwroot/Images/loading_screen.png" Color="fefeff" />
 
-		<!-- Images -->
-		<MauiImage Include="Resources\Images\*" />
-		<MauiImage Update="Resources\Images\dotnet_bot.svg" BaseSize="168,208" />
+    <!-- Images and fonts -->
+    <MauiImage Include="Resources/Images/*" />
+    <MauiImage Update="Resources/Images/dotnet_bot.svg" BaseSize="168,208" />
+    <MauiFont Include="Resources/Fonts/*" />
+    <MauiAsset Include="Resources/Raw/**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
 
-		<!-- Custom Fonts -->
-		<MauiFont Include="Resources\Fonts\*" />
+  <ItemGroup>
+    <Content Remove="wwwroot/JSON/appsettings.json" />
+  </ItemGroup>
 
-		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
-		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
-	</ItemGroup>
+  <ItemGroup>
+    <Compile Include="wwwroot/Messages/VinScannedMessage.cs" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<Content Remove="wwwroot\JSON\appsettings.json" />
-	</ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="wwwroot/JSON/appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
 
-	<ItemGroup>
-		<Compile Include="wwwroot\Messages\VinScannedMessage.cs" />
-	</ItemGroup>
+  <ItemGroup>
+    <MauiImage Include="Resources/Raw/alanjay.png">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </MauiImage>
+  </ItemGroup>
 
-	<ItemGroup>
-		<EmbeddedResource Include="wwwroot\JSON\appsettings.json">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</EmbeddedResource>
-	</ItemGroup>
+  <ItemGroup>
+    <None Include="wwwroot/Images/loading_screen.png" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<MauiAppIcon Include="Resources\AppIcon\fav512f.png" />
-		<MauiImage Include="Resources\Raw\alanjay.png">
-			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</MauiImage>
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Azure.Core" Version="1.44.1" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.24.0" />
+    <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
+    <PackageReference Include="Camera.MAUI" Version="1.5.1" />
+    <PackageReference Include="Camera.MAUI.ZXing" Version="1.0.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="DotNetSeleniumExtras.WaitHelpers" Version="3.11.0" />
+    <PackageReference Include="Google.Apis.Auth" Version="1.69.0" />
+    <PackageReference Include="Google.Apis.Sheets.v4" Version="1.69.0.3694" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.12.0" />
+    <PackageReference Include="MailKit.NET" Version="2.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="8.0.11" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions" Version="9.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.100" />
+    <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.100" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="8.0.100" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
+    <PackageReference Include="NETCore.MailKit" Version="2.1.0" />
+    <PackageReference Include="Selenium.Support" Version="4.30.0" />
+    <PackageReference Include="Selenium.WebDriver" Version="4.30.0" />
+    <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="134.0.6998.16500" />
+    <PackageReference Include="SkiaSharp" Version="3.116.1" />
+    <PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="3.116.1" />
+    <PackageReference Include="SkiaSharp.Views.Maui.Core" Version="3.116.1" />
+    <PackageReference Include="ZXing.Net.Maui" Version="0.4.0" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<None Include="wwwroot\Images\loading_screen.png" />
-	</ItemGroup>
+  <ItemGroup>
+    <Compile Update="Components/Pages/VinNumScanPage.xaml.cs">
+      <DependentUpon>VinNumScanPage.xaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
 
-	<ItemGroup>
-        <PackageReference Include="Azure.Core" Version="1.44.1" />
-        <PackageReference Include="Azure.Storage.Blobs" Version="12.24.0" />
-        <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
-        <PackageReference Include="Camera.MAUI" Version="1.5.1" />
-        <PackageReference Include="Camera.MAUI.ZXing" Version="1.0.0" />
-        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-        <PackageReference Include="DotNetSeleniumExtras.WaitHelpers" Version="3.11.0" />
-        <PackageReference Include="Google.Apis.Auth" Version="1.69.0" />
-        <PackageReference Include="Google.Apis.Sheets.v4" Version="1.69.0.3694" />
-        <PackageReference Include="HtmlAgilityPack" Version="1.12.0" />
-        <PackageReference Include="MailKit.NET" Version="2.0.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="8.0.11" />
-        <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions" Version="9.0.2" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.2">
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-          <PrivateAssets>all</PrivateAssets>
-        </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.2" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.2">
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-          <PrivateAssets>all</PrivateAssets>
-        </PackageReference>
-        <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.100" />
-        <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.100" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="8.0.100" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
-        <PackageReference Include="NETCore.MailKit" Version="2.1.0" />
-        <PackageReference Include="Selenium.Support" Version="4.30.0" />
-        <PackageReference Include="Selenium.WebDriver" Version="4.30.0" />
-        <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="134.0.6998.16500" />
-        <PackageReference Include="SkiaSharp" Version="3.116.1" />
-        <PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="3.116.1" />
-        <PackageReference Include="SkiaSharp.Views.Maui.Core" Version="3.116.1" />
-        <PackageReference Include="ZXing.Net.Maui" Version="0.4.0" />
-	</ItemGroup>
+  <ItemGroup>
+    <MauiXaml Update="Components/Pages/VinNumScanPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+  </ItemGroup>
 
-    <ItemGroup>
-      <Compile Update="Components\Pages\VinNumScanPage.xaml.cs">
-        <DependentUpon>VinNumScanPage.xaml</DependentUpon>
-      </Compile>
-    </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources/mipmap/" />
+  </ItemGroup>
+  <ItemGroup>
+  <!-- Remove old platform-specific assets if any are still referenced -->
+  <None Remove="Platforms/iOS/Assets.xcassets/**" />
+</ItemGroup>
 
-    <ItemGroup>
-      <MauiXaml Update="Components\Pages\VinNumScanPage.xaml">
-        <Generator>MSBuild:Compile</Generator>
-      </MauiXaml>
-    </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Resources\mipmap\" />
-    </ItemGroup>
-
-	<ItemGroup>
-		<Content Update="wwwroot\Images\alanjay.png">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
-	</ItemGroup>
+  <ItemGroup>
+    <Content Update="wwwroot/Images/alanjay.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 
 </Project>
