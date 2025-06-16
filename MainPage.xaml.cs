@@ -1,7 +1,6 @@
-﻿using Microsoft.AspNetCore.Components.WebView.Maui;
-using Microsoft.AspNetCore.Components;
+﻿
 using AlanJayApp.Services;
-using Camera.MAUI;
+
 
 namespace AlanJayApp
 {

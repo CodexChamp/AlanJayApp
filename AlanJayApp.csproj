@@ -18,6 +18,7 @@
     <!-- App metadata -->
     <ApplicationTitle>AlanJayFleet</ApplicationTitle>
     <ApplicationId>com.companyname.alanjayapp</ApplicationId>
+
     <ApplicationDisplayVersion>1.0.6</ApplicationDisplayVersion>
     <ApplicationVersion>6</ApplicationVersion>
 
@@ -40,23 +41,33 @@
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-android|AnyCPU'">
     <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0-ios'">
+  <Entitlements>Platforms/iOS/Entitlements.plist</Entitlements>
+ </PropertyGroup>
+ <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0-maccatalyst'">
+  <Entitlements>Platforms/MacCatalyst/Entitlements.plist</Entitlements>
+</PropertyGroup>
+
+
+
 
   <ItemGroup>
-    <!-- ✅ Modern MAUI-style icon using SVG -->
-    <MauiIcon Include="Resources/AppIcon/appicon.svg" />
+        <!-- App Icon -->
+        <MauiIcon Include="Resources\AppIcon\appicon.png" />
 
-  </ItemGroup>
+        <!-- Splash Screen -->
+        <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="white"/>
 
-  <ItemGroup>
-    <!-- Splash screen -->
-    <MauiSplashScreen Include="wwwroot/Images/loading_screen.png" Color="fefeff" />
+        <!-- Images -->
+        <MauiImage Include="Resources\Images\*" />
+        <MauiImage Update="Resources\Images\dotnet_bot.svg" BaseSize="168,208" />
 
-    <!-- Images and fonts -->
-    <MauiImage Include="Resources/Images/*" />
-    <MauiImage Update="Resources/Images/dotnet_bot.svg" BaseSize="168,208" />
-    <MauiFont Include="Resources/Fonts/*" />
-    <MauiAsset Include="Resources/Raw/**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
-  </ItemGroup>
+        <!-- Custom Fonts -->
+        <MauiFont Include="Resources\Fonts\*" />
+
+        <!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
+        <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+    </ItemGroup>
 
   <ItemGroup>
     <Content Remove="wwwroot/JSON/appsettings.json" />
@@ -113,9 +124,6 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="8.0.100" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
     <PackageReference Include="NETCore.MailKit" Version="2.1.0" />
-    <PackageReference Include="Selenium.Support" Version="4.30.0" />
-    <PackageReference Include="Selenium.WebDriver" Version="4.30.0" />
-    <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="134.0.6998.16500" />
     <PackageReference Include="SkiaSharp" Version="3.116.1" />
     <PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="3.116.1" />
     <PackageReference Include="SkiaSharp.Views.Maui.Core" Version="3.116.1" />
@@ -137,10 +145,10 @@
   <ItemGroup>
     <Folder Include="Resources/mipmap/" />
   </ItemGroup>
-  <ItemGroup>
-  <!-- Remove old platform-specific assets if any are still referenced -->
-  <None Remove="Platforms/iOS/Assets.xcassets/**" />
-</ItemGroup>
+
+
+
+
 
 
   <ItemGroup>

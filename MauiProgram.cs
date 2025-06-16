@@ -2,27 +2,13 @@
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
-using System.Threading.Tasks;
-using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
 using Blazored.LocalStorage;
 using Camera.MAUI;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.WebView.Maui;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.Maui;
-using Microsoft.Maui.Controls.Compatibility.Hosting;
 using Microsoft.Maui.Handlers;
-using Microsoft.Maui.Hosting;
-using Microsoft.Maui.Storage;
-using Microsoft.Maui.Graphics;
-using SkiaSharp.Views.Maui;
-using SkiaSharp.Views.Maui.Handlers;
-using SkiaSharp.Views.Maui.Controls;
 using AlanJayApp.Data;
 using AlanJayApp.Services;
 
@@ -70,8 +56,6 @@ namespace AlanJayApp
             builder.Services.AddSingleton<DatabaseConnectionService>();
             builder.Services.AddSingleton<CarService>();
             builder.Services.AddBlazoredLocalStorage();
-            builder.Services.AddScoped<FordRecallScraperService>();
-            builder.Services.AddScoped<StellantisRecallScraperService>();
 
             // ─── Register your BlobServiceClient ───────────────────────────────────
             // grabs connection string from AppSettings and constructs the client

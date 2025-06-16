@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using OpenQA.Selenium;
+﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
@@ -62,9 +60,7 @@ namespace AlanJayApp.Services
                         // Example: By.Id("siteDropdown") — replace with the real ID or name
                         var siteDropdown = wait.Until(ExpectedConditions
                             .ElementIsVisible(By.Name("siteList")));
-                        // Use Selenium's SelectElement for <select> elements
-                        var selectSite = new SelectElement(siteDropdown);
-                        selectSite.SelectByText("@Ford Online (PROD-Alias)"); // The visible text in the dropdown
+                        // Use Selenium's SelectElemen// The visible text in the dropdown
 
                         // 7. Click the second "Sign In" button
                         // Example: an <input type="submit" value="Sign in" ...> or a <button> 
