@@ -100,7 +100,6 @@
             ErrorMessage = "Invalid credentials.";
         }
     }
-    private string firewallStatus = "";
 
     private async Task GrantDatabaseAccessAsync()
     {
@@ -116,7 +115,8 @@
             {
                 var result = await response.Content.ReadAsStringAsync();
                 var firewallStatus = $"✅ Firewall rule applied. Response: {result}";
-                await JS.InvokeVoidAsync("console.log", firewallStatus);
+                var firewallStatusMessage = $"✅ Firewall rule applied. Response: {result}";
+                await JS.InvokeVoidAsync("console.log", firewallStatusMessage);
             }
             else
             {

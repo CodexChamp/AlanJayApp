@@ -9,7 +9,7 @@ namespace AlanJayApp.Data
     public class AppSettings
     {
         public string AppName { get; set; } = "Alan Jay Fleet";
-        public string Version { get; set; } = "1.0.6";
+        public string Version { get; set; } = "1.0.7";
         public string Theme { get; set; } = "Dark";
         public string FontSize { get; set; } = "Medium";
         public string AccentColor { get; set; } = "#007bff";
@@ -22,7 +22,7 @@ namespace AlanJayApp.Data
         public bool ShowDebugLogs { get; set; } = false;
         public string Language { get; set; } = "English";
         
-        public string BlobStorageConnectionString { get; set; }
+        public string? BlobStorageConnectionString { get; set; }
     }
 }
 

@@ -19,8 +19,8 @@
     <ApplicationTitle>AlanJayFleet</ApplicationTitle>
     <ApplicationId>com.companyname.alanjayapp</ApplicationId>
 
-    <ApplicationDisplayVersion>1.0.6</ApplicationDisplayVersion>
-    <ApplicationVersion>6</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0.7</ApplicationDisplayVersion>
+    <ApplicationVersion>7</ApplicationVersion>
 
     <!-- Platform support -->
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">14.2</SupportedOSPlatformVersion>

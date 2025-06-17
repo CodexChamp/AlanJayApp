@@ -17,7 +17,6 @@
 @inject CarService CarService
 @implements IDisposable
 
-
 <div class="container" id="vinContainer" style="background-color:@ContainerColor">
     <!-- VIN Input -->
     <div class="input-section">
@@ -60,7 +59,7 @@
                 <InputText @bind-Value="EnteredKeyCode" class="form-control d-inline-block" style="width:120px;" disabled="@IsBusy" />
                 @if (!IsBusy && KeyCodeChanged)
                 {
-                    <span style="color:green; margin-left:5px;">✓</span>
+                    <span style="color:green; margin-left:5px;">&#10003;</span>
                 }
             </div>
 
@@ -80,8 +79,33 @@
 
                 @if (!IsBusy && LocationChanged)
                 {
-                    <span style="color:green;margin-left:5px">✓</span>
+                    <span style="color:green;margin-left:5px">&#10003;</span>
                 }
+            </div>
+
+            <div class="form-group">
+                <label>On Hold:</label>
+                <InputCheckbox @bind-Value="OnHold" class="form-check-input" @onchange="OnOnHoldChanged" disabled="@IsBusy" />
+>
+
+                @if (OnHold)
+{
+    <div class="form-group">
+        <label>Going To:</label>
+        <select @bind="EnteredGoingTo" class="form-control d-inline-block" style="width: 200px; margin-left: 10px;">
+            <option value="" disabled hidden>Select destination</option>
+            @foreach (var loc in LocationOptions)
+            {
+                <option value="@loc">@loc</option>
+            }
+            @if (!string.IsNullOrWhiteSpace(EnteredGoingTo) && !LocationOptions.Contains(EnteredGoingTo))
+            {
+                <option value="@EnteredGoingTo">@EnteredGoingTo</option>
+            }
+        </select>
+    </div>
+}
+
             </div>
 
             <div class="form-group">
@@ -136,7 +160,12 @@
     private bool KeyCodeChanged     => EnteredKeyCode.Trim()  != OriginalKeyCode.Trim();
     private bool LocationChanged    => EnteredLocation.Trim() != OriginalLocation.Trim();
     private bool DamageChanged      => DamageDescription.Trim() != OriginalDamage.Trim();
-    private bool CanSave            => KeyCodeChanged || LocationChanged || DamageChanged;
+    private bool OnHold { get; set; } = false;
+    private bool OriginalOnHold { get; set; } = false;
+    private string EnteredGoingTo { get; set; } = string.Empty;
+    private string OriginalGoingTo { get; set; } = string.Empty;
+    private bool OnHoldChanged => OnHold != OriginalOnHold;
+    private bool CanSave => KeyCodeChanged || LocationChanged || DamageChanged || OnHoldChanged;
     private string SaveStatusColor  => SaveStatus.Contains("✓") ? "green" : SaveStatus == "Error" ? "red" : "black";
     private string ContainerColor   => VehicleDetails?.Location == "NA" ? "#d3d3d3" : "#e6f9e6";
     private async Task QueueSaveAsync() => await EnqueueAsync(SaveAsync);
@@ -231,7 +260,7 @@
                                 from q in qj.DefaultIfEmpty()
                                 join a in DbContext.AzAgency on q.Agency_Contact equals a.AgencyContactID into aj
                                 from a in aj.DefaultIfEmpty()
-                                where v.VIN.Replace("-", "").Trim() == formatted
+                                where (v.VIN ?? string.Empty).Replace("-", "").Trim() == formatted
                                 select new VehicleInfo
                                 {
                                     VehicleID = v.VehicleID,
@@ -242,20 +271,22 @@
                                     Vyear     = v.Vyear ?? "Unknown",
                                     Vmake     = v.Vmake ?? "Unknown",
                                     Location  = v.Location ?? "NA",
-                                    KeyCode   = v.KeyCode ?? "NA"
+                                    KeyCode   = v.KeyCode ?? "NA",
+                                    OnHold    = (v.OnHold ?? false),
+                                    GoingTo   = v.GoingTo ?? "NA"
                                 }).FirstOrDefaultAsync();
         if (VehicleDetails != null)
         {
-            // initialize fields
-            OriginalKeyCode = EnteredKeyCode = VehicleDetails.KeyCode == "NA" ? "" : VehicleDetails.KeyCode;
+            OriginalKeyCode = EnteredKeyCode = VehicleDetails.KeyCode == "NA" ? "" : VehicleDetails.KeyCode ?? "";
             OriginalLocation = EnteredLocation = VehicleDetails.Location ?? "";
             OriginalDamage = DamageDescription = "";
+            OriginalOnHold = OnHold = VehicleDetails.OnHold;
+            OriginalGoingTo = EnteredGoingTo = VehicleDetails.GoingTo ?? "";
 
             await LoadLocationOptions(VehicleDetails.VehicleID);
         }
         StateHasChanged();
     }
-
     private async Task SaveKeyTagAsync()
     {
         try
@@ -263,31 +294,30 @@
             var vin = VinInput;
             DetachIfTracked(vin);
             var entry = new VehiclesScanned
-                {
-                    VIN = vin,
-                    vehicleID = VehicleDetails!.VehicleID,
-                    damagedInTransit = !string.IsNullOrEmpty(DamageDescription),
-                    note = DamageDescription ?? "",
-                    location = EnteredLocation,
-                    KeyCode = EnteredKeyCode ?? "",
-                    locationChanged = false,
-                    keyCodeChanged = false
-                };
+            {
+                VIN = vin,
+                vehicleID = VehicleDetails!.VehicleID,
+                damagedInTransit = !string.IsNullOrEmpty(DamageDescription),
+                note = DamageDescription ?? "",
+                location = EnteredLocation,
+                KeyCode = EnteredKeyCode ?? "",
+                OnHold = OnHold,
+                GoingTo = EnteredGoingTo,
+                locationChanged = false,
+                keyCodeChanged = false,
+                OnHoldChanged = false
+            };
             DbContext.VehiclesScanned.Add(entry);
-
             await DbContext.SaveChangesAsync();
             SaveStatus = "KeyTag ✓";
         }
         catch (Exception ex)
         {
-            // show the actual SQL or constraint error
             SaveStatus = $"Error: {ex.InnerException?.Message ?? ex.Message}";
         }
 
         StateHasChanged();
         await Task.Delay(2000);
-
-        // reload the record (and clear status)
         await ProcessVinAsync();
         SaveStatus = string.Empty;
         StateHasChanged();
@@ -295,8 +325,8 @@
 
     private async Task SaveAsync()
     {
-        IsBusy = true;               // Show spinner
-        SaveStatus = "";             // Hide status until done
+        IsBusy = true;
+        SaveStatus = "";
         StateHasChanged();
 
         try
@@ -305,24 +335,31 @@
             DetachIfTracked(vin);
 
             var entry = new VehiclesScanned
-                {
-                    VIN = vin,
-                    vehicleID = VehicleDetails!.VehicleID,
-                    damagedInTransit = !string.IsNullOrEmpty(DamageDescription),
-                    note = DamageDescription,
-                    location = EnteredLocation,
-                    KeyCode = EnteredKeyCode,
-                    locationChanged = LocationChanged,
-                    keyCodeChanged = KeyCodeChanged
-                };
+            {
+                VIN = vin,
+                vehicleID = VehicleDetails!.VehicleID,
+                damagedInTransit = !string.IsNullOrEmpty(DamageDescription),
+                note = DamageDescription,
+                location = EnteredLocation,
+                KeyCode = EnteredKeyCode,
+                OnHold = OnHold,
+                GoingTo = EnteredGoingTo,
+                locationChanged = LocationChanged,
+                keyCodeChanged = KeyCodeChanged,
+                OnHoldChanged = OnHoldChanged
+            };
             DbContext.VehiclesScanned.Add(entry);
 
             var master = new AzVehicles { VehicleID = VehicleDetails.VehicleID };
             DbContext.AzVehicles.Attach(master);
             master.Location = EnteredLocation;
             master.KeyCode = EnteredKeyCode;
+            master.OnHold = OnHold;
+            master.GoingTo = EnteredGoingTo;
             DbContext.Entry(master).Property(x => x.Location).IsModified = true;
             DbContext.Entry(master).Property(x => x.KeyCode).IsModified = true;
+            DbContext.Entry(master).Property(x => x.OnHold).IsModified = true;
+            DbContext.Entry(master).Property(x => x.GoingTo).IsModified = true;
 
             await DbContext.SaveChangesAsync();
         }
@@ -331,15 +368,18 @@
             SaveStatus = $"Error: {ex.InnerException?.Message ?? ex.Message}";
         }
 
-        IsBusy = false;             // Hide spinner
-        SaveStatus = "Saved ✓";     // ✅ Now show green check
+        IsBusy = false;
+        SaveStatus = "Saved ✓";
         StateHasChanged();
-
-        await Task.Delay(2000);     // Show message for a moment
+        await Task.Delay(2000);
         SaveStatus = "";
         StateHasChanged();
     }
-
+    private void OnOnHoldChanged(ChangeEventArgs e)
+    {
+        OnHold = e.Value is bool b && b;
+        StateHasChanged();
+    }
     // Helpers
     private Task ClearVin()
     {
@@ -350,7 +390,17 @@
         return JS.InvokeVoidAsync("localStorage.removeItem", "savedVIN").AsTask();
     }
     private void OpenWindowSticker() => Navigation.NavigateTo($"/windowsticker?vin={VinInput}");
-    private async Task TriggerNativeScanner() => await App.Current.MainPage.Navigation.PushAsync(new VinNumScanPage(BlobClient, VinInput));
+    private async Task TriggerNativeScanner()
+    {
+        if (App.Current?.MainPage?.Navigation != null)
+        {
+            await App.Current.MainPage.Navigation.PushAsync(new VinNumScanPage(BlobClient, VinInput));
+        }
+        else
+        {
+            Console.WriteLine("[ERROR] App.Current.MainPage or its Navigation property is null.");
+        }
+    }
     private void DetachIfTracked(string vin)
     {
         var tracked = DbContext.ChangeTracker.Entries<VehiclesScanned>().FirstOrDefault(e => e.Entity.VIN == vin);
@@ -441,5 +491,7 @@
         public string? Vmake { get; set; }
         public string? Location { get; set; }
         public string? KeyCode { get; set; }
+        public bool OnHold { get; set; }
+        public string? GoingTo { get; set; }
     }
 }

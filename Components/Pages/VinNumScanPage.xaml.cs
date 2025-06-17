@@ -32,7 +32,7 @@ namespace AlanJayApp.Components.Pages
         readonly List<string> photoPaths = new();
 
         public VinNumScanPage()
-            : this(ServiceHelper.GetService<BlobServiceClient>(), null)
+            : this(ServiceHelper.GetService<BlobServiceClient>(), string.Empty)
         { }
         public VinNumScanPage(BlobServiceClient blobClient, string initialVin)
         {

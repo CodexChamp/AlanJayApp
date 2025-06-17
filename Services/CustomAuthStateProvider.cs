@@ -16,10 +16,11 @@ namespace AlanJayApp.Services
 
         public async Task<bool> IsLoggedInAsync()
         {
-            return await SecureStorage.GetAsync(AuthKey) == "true";
+            var result = await SecureStorage.GetAsync(AuthKey);
+            return result == "true";
         }
 
-        public async Task SetLoggedInAsync(UserData user)
+        public Task SetLoggedInAsync(UserData user)
         {
             Preferences.Set("isLoggedIn", true);
             Preferences.Set("InspectorName", user.loginID);
@@ -28,15 +29,17 @@ namespace AlanJayApp.Services
               Task.FromResult(new AuthenticationState(
                 new ClaimsPrincipal(new ClaimsIdentity(
                   new[] { new Claim(ClaimTypes.Name, user.loginID) }, "auth")))));
+            return Task.CompletedTask;
         }
 
 
 
-        public async Task LogoutAsync()
+        public Task LogoutAsync()
         {
             SecureStorage.Remove("isLoggedIn");
             SecureStorage.Remove("currentUser");
             Preferences.Remove("InspectorName");
+            return Task.CompletedTask;
         }
 
 

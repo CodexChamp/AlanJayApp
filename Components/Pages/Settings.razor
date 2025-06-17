@@ -55,7 +55,7 @@
 {
     <h3>Database Connection</h3>
     <label>Select Database:</label>
-    <select @onchange="e => ChangeDatabase(e.Value.ToString())" class="form-control">
+    <select @onchange="OnDatabaseChanged" class="form-control">
         <option value="@SelectedDatabase" selected>
             @(SelectedDatabase == "DefaultConnection" ? "Production Database" : "Development Database")
         </option>
@@ -163,11 +163,17 @@
         // Apply all settings immediately after saving
         await ApplySettings();
     }
+    private async Task OnDatabaseChanged(ChangeEventArgs e)
+    {
+        var value = e?.Value?.ToString() ?? "DefaultConnection";
+        await ChangeDatabase(value);
+    }
+
     private async Task ChangeDatabase(string databaseKey)
     {
-        if (_selectedDatabase == databaseKey) return; // ✅ Prevent redundant updates
+        if (string.IsNullOrEmpty(databaseKey) || _selectedDatabase == databaseKey) return; // Prevent redundant or invalid updates
 
-        _selectedDatabase = databaseKey ?? "DefaultConnection";
+        _selectedDatabase = databaseKey;
 
         Console.WriteLine($"Switching to database: {_selectedDatabase}");
 

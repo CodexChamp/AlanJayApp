@@ -222,6 +222,9 @@ namespace AlanJayApp.Data
 
         public bool locationChanged { get; set; }
         public bool keyCodeChanged { get; set; }
+        public bool OnHold { get; set; }
+        public string? GoingTo { get; set; }
+        public bool OnHoldChanged { get; set; }
     }
     public class AzVehicles
     {
